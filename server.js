@@ -64,7 +64,7 @@ app.get('/do?', (req, res) => {
 // app.get('/products', someF(app.req, app.res));
 
 app.get('/', (req, res) => {
-  res.send();
+  res.status(301).redirect('https://www.btph.ga/');
 });
 
 app.get('/load?', (req, res) => {
@@ -174,10 +174,10 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname + '/html/inv-main.html'));
 });
 
-let port = 8080;
+let port = 80;
 
-app.listen(process.env.PORT || 5000, () => {
-  console.log(`BTPH API listening on port ${port}`);
+app.listen(process.env.PORT || port, () => {
+  console.log(`BTPH API listening on port ${process.env.PORT || port}`);
 });
 
 // pokeName.innerHTML = "Hello";
