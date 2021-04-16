@@ -1,0 +1,34 @@
+{
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.15.3",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "mongodb": "^3.6.5",
+    "mongoose": "^5.12.3",
+    "whatwg-fetch": "^3.6.2",
+    "xmlhttprequest": "^1.8.0"
+  },
+  "name": "inventory-sys-web",
+  "version": "0.2.1",
+  "description": "Customized PWA-Based Inventory Management System for BodyTalks.PH",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/epcraft93/inventory-sys-web.git"
+  },
+  "keywords": [
+    "ims",
+    "pwa",
+    "btph"
+  ],
+  "author": "Danry Ague",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/epcraft93/inventory-sys-web/issues"
+  },
+  "homepage": "https://github.com/epcraft93/inventory-sys-web#readme"
+}
