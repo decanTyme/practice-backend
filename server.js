@@ -176,7 +176,7 @@ app.get('/dashboard', (req, res) => {
 
 let port = 8080;
 
-app.listen(port, () => {
+app.listen(process.env.PORT || 5000, () => {
   console.log(`BTPH API listening on port ${port}`);
 });
 
