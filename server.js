@@ -9,6 +9,8 @@ let express = require('express');
 let app = express();
 var path = require('path');
 let mongoose = require('mongoose');
+let bcrypt = require('bcrypt');
+let jwt = require('jsonwebtoken');
 let cors = require('cors');
 // let db = mongoose.connect("mongodb://localhost/btph", {
 //   useNewUrlParser: true, useUnifiedTopology: true
@@ -19,12 +21,15 @@ app.use(express.json());
 app.use(cors());
 
 mongoose.connect(uri, {
-  useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true
+  useNewUrlParser: true,
+  useFindAndModify: false,
+  useUnifiedTopology: true
 }).then(console.log("Connect successful."));
 
 let Product = require('./js/models/product');
 let Customer = require('./js/models/customer');
 let Event = require('./js/models/events');
+let User = require('./js/models/users');
 
 app.get('/aneue-sama', (req, res) => {
   res.send("Daisukiiiiiiii");
@@ -59,9 +64,71 @@ app.get('/do?', (req, res) => {
 
 app.use('/login', (req, res) => {
   console.log(req.body);
-  res.send({
-    token: 'hejda123'
+
+  User.findOne({
+    username: req.body.username
+  }).then(user => {
+    if (!user) {
+      return res.status(401).json({
+        error: `No user '${req.body.username}' found!`
+      });
+    }
+    console.log("Comparing bcrypt...");
+    bcrypt.compare(req.body.password, user.password).then(
+      (valid) => {
+        if (!valid) {
+          console.log("Invalid bcrypt", req.body.password, user.password);
+          return res.status(401).json({
+            error: 'Incorrect password!'
+          });
+        }
+        let token = jwt.sign({
+            userId: user._id
+          },
+          'RANDOM_TOKEN_SECRET', {
+            expiresIn: '12h'
+          });
+        res.status(200).json({
+          userId: user._id,
+          token: token
+        });
+      }
+    ).catch(
+      (error) => {
+        res.status(500).json({
+          error: `in bcrypt: ${error}`
+        });
+      }
+    );
+  }).catch(
+    (error) => {
+      res.status(500).json({
+        error: "in find()"
+      });
+    }
+  );
+});
+
+app.post('/signup', (req, res) => {
+  console.log(req.body);
+
+  let newUser = new User({
+    username: req.body.username,
+    password: req.body.password
   });
+
+  bcrypt.genSalt(10, (err, salt) => 
+    bcrypt.hash(newUser.password, salt, 
+      (err, hash) => {
+        if (err) throw err;
+        newUser.password = hash;
+        newUser.save().then(value => {
+          console.log(value);
+          res.send(value);
+        })
+      }  
+    )
+  )
 });
 
 app.get('/load?', (req, res) => {
@@ -80,9 +147,13 @@ app.get('/load?', (req, res) => {
       }).send(event);
     });
   } else {
-    Product.find({_id:req.query.p}, (err, product) => {
+    Product.find({
+      _id: req.query.p
+    }, (err, product) => {
       if (err) {
-        res.status(500).send({error: `There is no product called ${req.query.p} found.`});
+        res.status(500).send({
+          error: `There is no product called ${req.query.p} found.`
+        });
       } else {
         res.set({
           "Content-Type": "application/json",
@@ -132,7 +203,9 @@ app.post('/add?', (req, res) => {
       }
     });
   } else {
-    res.status(404).send({error:"Not found."})
+    res.status(404).send({
+      error: "Not found."
+    })
   }
 });
 
@@ -141,7 +214,9 @@ app.delete('/del?', (req, res) => {
   if (req.query.i === "product") {
     console.log("Data body:", req.body);
 
-    let product = Product.find({_id: req.body._id});
+    let product = Product.find({
+      _id: req.body._id
+    });
     product.deleteOne((err, product) => {
       if (err) {
         res.status(500).send({
@@ -163,12 +238,16 @@ app.delete('/del?', (req, res) => {
       }
     });
   } else {
-    res.status(404).send({error:"Not found."})
+    res.status(404).send({
+      error: "Not found."
+    })
   }
 });
 
 app.get("/dashboard", (req, res) => {
-  res.send({msg: "Hello! responding Dashboad from Node server."});
+  res.send({
+    msg: "Hello! responding Dashboad from Node server."
+  });
 });
 
 let port = 8080;
