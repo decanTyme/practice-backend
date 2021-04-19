@@ -53,18 +53,15 @@ app.get('/do?', (req, res) => {
   }
 });
 
-// function sendPro(err, products) {
-//   return res.send(products);
-// }
+// app.get('/', (req, res) => {
+//   res.status(301).redirect('https://www.btph.ga/');
+// });
 
-// function someF(req, res) {
-//   return Product.find({}, sendPro(res));
-// }
-
-// app.get('/products', someF(app.req, app.res));
-
-app.get('/', (req, res) => {
-  res.status(301).redirect('https://www.btph.ga/');
+app.use('/login', (req, res) => {
+  console.log(req.body);
+  res.send({
+    token: 'hejda123'
+  });
 });
 
 app.get('/load?', (req, res) => {
@@ -170,11 +167,11 @@ app.delete('/del?', (req, res) => {
   }
 });
 
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname + '/html/inv-main.html'));
+app.get("/dashboard", (req, res) => {
+  res.send({msg: "Hello! responding Dashboad from Node server."});
 });
 
-let port = 80;
+let port = 8080;
 
 app.listen(process.env.PORT || port, () => {
   console.log(`BTPH API listening on port ${process.env.PORT || port}`);
