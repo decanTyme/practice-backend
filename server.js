@@ -1,10 +1,8 @@
 'use strict';
 
-
-// const MongoClient = require('mongodb').MongoClient;
 const uri = "mongodb+srv://JlearnUse:wVmV4RL0am4MuinO@learningcluster0.p98nk.mongodb.net/btph?retryWrites=true&w=majority";
-// const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
+// Imports
 let express = require('express');
 let app = express();
 var path = require('path');
@@ -20,17 +18,49 @@ app.use(express.static(__dirname + '/'));
 app.use(express.json());
 app.use(cors());
 
-mongoose.connect(uri, {
+// Mongoose connect
+const mOpts = {
   useNewUrlParser: true,
   useFindAndModify: false,
   useUnifiedTopology: true
-}).then(console.log("Connect successful."));
+};
+mongoose.connect(uri, mOpts);
 
+// Mongoose connect events
+let db = mongoose.connection;
+db.on('connecting', () => {
+  console.log("Connecting to the database...");
+});
+
+db.on('error', err => {
+  console.log("Database connect error: ", err);
+  mongoose.disconnect();
+});
+
+db.on('reconnected', () => {
+  console.log("Database successfully reconnected!");
+})
+
+db.on('disconnected', function () {
+  console.log('MongoDB disconnected!');
+  mongoose.connect(uri, mOpts);
+});
+
+db.on('connected', () => {
+  console.log('Database connected!');
+});
+
+db.once('open', () => {
+  console.log('Database connection successfully opened!');
+});
+
+// Mongoose model imports
 let Product = require('./js/models/product');
 let Customer = require('./js/models/customer');
 let Event = require('./js/models/events');
 let User = require('./js/models/users');
 
+// Routes
 app.get('/aneue-sama', (req, res) => {
   res.send("Daisukiiiiiiii");
 });
@@ -58,9 +88,9 @@ app.get('/do?', (req, res) => {
   }
 });
 
-// app.get('/', (req, res) => {
-//   res.status(301).redirect('https://www.btph.ga/');
-// });
+app.get('/', (req, res) => {
+  res.status(301).redirect('https://www.btph.ga/');
+});
 
 app.use('/login', (req, res) => {
   console.log(req.body);
@@ -117,8 +147,8 @@ app.post('/signup', (req, res) => {
     password: req.body.password
   });
 
-  bcrypt.genSalt(10, (err, salt) => 
-    bcrypt.hash(newUser.password, salt, 
+  bcrypt.genSalt(10, (err, salt) =>
+    bcrypt.hash(newUser.password, salt,
       (err, hash) => {
         if (err) throw err;
         newUser.password = hash;
@@ -126,7 +156,7 @@ app.post('/signup', (req, res) => {
           console.log(value);
           res.send(value);
         })
-      }  
+      }
     )
   )
 });
@@ -255,5 +285,3 @@ let port = 8080;
 app.listen(process.env.PORT || port, () => {
   console.log(`BTPH API listening on port ${process.env.PORT || port}`);
 });
-
-// pokeName.innerHTML = "Hello";
