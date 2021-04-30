@@ -136,7 +136,7 @@ app.use('/login', (req, res) => {
             userId: user._id
           },
           'RANDOM_TOKEN_SECRET', {
-            expiresIn: '12h'
+            expiresIn: '1h'
           });
         res.status(200).json({
           userId: user._id,
