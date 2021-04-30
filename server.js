@@ -109,12 +109,11 @@ app.get('/redir?:userId', (req, res) => {
 
 app.use('/', (req, res) => {
   var token = req.headers['x-access-token'];
-  console.log(token)
-  if (!token) return res.status(401).redirect('https://www.btph.ga/#/login');
+  if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
   
   jwt.verify(token, 'RANDOM_TOKEN_SECRET', (err, decoded) => {
-    if (err) return res.status(401).redirect('https://www.btph.ga/#/login');
-    res.status(200).redirect('https://www.btph.ga/#/dashboard');
+    if (err) return res.status(401).send({ auth: false, message: 'Failed to authenticate token.' });
+    res.status(200).send(decoded);
   });
 });
 
