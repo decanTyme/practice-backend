@@ -107,7 +107,7 @@ app.get('/redir?:userId', (req, res) => {
   }
 });
 
-app.use('/', (req, res) => {
+app.post('/', (req, res) => {
   var token = req.headers['x-access-token'];
   if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
   
