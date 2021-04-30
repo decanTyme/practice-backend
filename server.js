@@ -1,7 +1,5 @@
 'use strict';
 
-const uri = "mongodb+srv://JlearnUse:wVmV4RL0am4MuinO@learningcluster0.p98nk.mongodb.net/btph?retryWrites=true&w=majority";
-
 // Imports
 let express = require('express');
 let app = express();
@@ -19,6 +17,7 @@ app.use(express.json());
 app.use(cors());
 
 // Mongoose connect
+const uri = "mongodb+srv://JlearnUse:wVmV4RL0am4MuinO@learningcluster0.p98nk.mongodb.net/btph?retryWrites=true&w=majority";
 const mOpts = {
   useNewUrlParser: true,
   useFindAndModify: false,
@@ -27,6 +26,7 @@ const mOpts = {
 mongoose.connect(uri, mOpts);
 
 // Mongoose connect events
+let isDbConnected = false;
 let db = mongoose.connection;
 db.on('connecting', () => {
   console.log("Connecting to the database...");
@@ -34,20 +34,24 @@ db.on('connecting', () => {
 
 db.on('error', err => {
   console.log("Database connect error: ", err);
+  isDbConnected = false;
   mongoose.disconnect();
 });
 
 db.on('reconnected', () => {
   console.log("Database successfully reconnected!");
+  isDbConnected = true;
 })
 
 db.on('disconnected', function () {
   console.log('MongoDB disconnected!');
+  isDbConnected = false;
   mongoose.connect(uri, mOpts);
 });
 
 db.on('connected', () => {
   console.log('Database connected!');
+  isDbConnected = true;
 });
 
 db.once('open', () => {
@@ -88,8 +92,30 @@ app.get('/do?', (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.status(301).redirect('https://www.btph.ga/');
+app.get('/ping', (req, res) => {
+  if (isDbConnected) {
+    res.send({connected: true});
+  } else res.status(500).send({error: "Database connect error"});
+});
+
+app.get('/redir?:userId', (req, res) => {
+  const userSessionId = req.params.userId;
+  if (!userSessionId) {
+    res.status(401).redirect('https://www.btph.ga/#/login');
+  } else {
+    res.status(301).redirect('https://www.btph.ga/#/dasboard');
+  }
+});
+
+app.use('/', (req, res) => {
+  var token = req.headers['x-access-token'];
+  console.log(token)
+  if (!token) return res.status(401).redirect('https://www.btph.ga/#/login');
+  
+  jwt.verify(token, 'RANDOM_TOKEN_SECRET', (err, decoded) => {
+    if (err) return res.status(401).redirect('https://www.btph.ga/#/login');
+    res.status(200).redirect('https://www.btph.ga/#/dashboard');
+  });
 });
 
 app.use('/login', (req, res) => {
