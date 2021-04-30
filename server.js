@@ -92,19 +92,14 @@ app.get('/do?', (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.status(301).redirect('/dashboard');
+});
+
 app.get('/ping', (req, res) => {
   if (isDbConnected) {
     res.send({connected: true});
   } else res.status(500).send({error: "Database connect error"});
-});
-
-app.get('/redir?:userId', (req, res) => {
-  const userSessionId = req.params.userId;
-  if (!userSessionId) {
-    res.status(401).redirect('https://www.btph.ga/#/login');
-  } else {
-    res.status(301).redirect('https://www.btph.ga/#/dasboard');
-  }
 });
 
 app.post('/', (req, res) => {
