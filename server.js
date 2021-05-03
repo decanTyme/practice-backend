@@ -1,16 +1,16 @@
 'use strict';
 
 // Imports
-let express = require('express');
-let app = express();
+const express = require('express');
+const app = express();
 var path = require('path');
-let mongoose = require('mongoose');
-let bcrypt = require('bcrypt');
-let jwt = require('jsonwebtoken');
-let cors = require('cors');
-// let db = mongoose.connect("mongodb://localhost/btph", {
-//   useNewUrlParser: true, useUnifiedTopology: true
-// });
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const cors = require('cors');
+
+const dotenv = require('dotenv');
+dotenv.config();
 
 app.use(express.static(__dirname + '/'));
 app.use(express.json());
@@ -92,7 +92,24 @@ app.get('/do?', (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
+function authenticateToken(req, res, next) {
+  const token = req.headers['x-access-token'];
+
+  console.log("token from client: ", token)
+  if (token == null) return res.status(401).send({ auth: false, message: 'No token provided.' });
+
+  jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+    if (err) return res.status(403).send({ hasToken: true, auth: false, message: 'Failed to authenticate token.' });
+    req.user = user;
+    next();
+  });
+}
+
+app.get('/', authenticateToken, (req, res) => {
+  res.status(301).redirect('/dashboard');
+});
+
+app.use('/authenticate', authenticateToken, (req, res) => {
   res.status(301).redirect('/dashboard');
 });
 
@@ -102,42 +119,31 @@ app.get('/ping', (req, res) => {
   } else res.status(500).send({error: "Database connect error"});
 });
 
-app.post('/', (req, res) => {
-  var token = req.headers['x-access-token'];
-  if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
-  
-  jwt.verify(token, 'RANDOM_TOKEN_SECRET', (err, decoded) => {
-    if (err) return res.status(401).send({ auth: false, message: 'Failed to authenticate token.' });
-    res.status(200).send(decoded);
-  });
-});
-
 app.use('/login', (req, res) => {
-  console.log(req.body);
+  console.log(req.headers);
 
   User.findOne({
     username: req.body.username
   }).then(user => {
     if (!user) {
       return res.status(401).json({
-        error: `No user '${req.body.username}' found!`
+        error: 'Invalid credentials.'
       });
     }
     console.log("Comparing bcrypt...");
     bcrypt.compare(req.body.password, user.password).then(
-      (valid) => {
+      valid => {
         if (!valid) {
           console.log("Invalid bcrypt", req.body.password, user.password);
           return res.status(401).json({
-            error: 'Incorrect password!'
+            error: 'Invalid credentials.'
           });
         }
-        let token = jwt.sign({
-            userId: user._id
-          },
-          'RANDOM_TOKEN_SECRET', {
-            expiresIn: '1h'
+        const token = jwt.sign({userId: user._id},
+          process.env.TOKEN_SECRET, {
+            expiresIn: '1hr'
           });
+        console.log("token in server: ", token);
         res.status(200).json({
           userId: user._id,
           token: token
