@@ -113,7 +113,7 @@ app.use('/authenticate', authenticateToken, (req, res) => {
   res.status(301).redirect('/dashboard');
 });
 
-app.get('/ping', (req, res) => {
+app.get('/ping', authenticateToken, (req, res) => {
   if (isDbConnected) {
     res.send({connected: true});
   } else res.status(500).send({error: "Database connect error"});
