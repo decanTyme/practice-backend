@@ -96,16 +96,19 @@ function authenticateToken(req, res, next) {
   const token = req.headers['x-access-token'];
 
   console.log("token from client: ", token)
+  // if (token == null) return res.status(401).redirect('/login');
   if (token == null) return res.status(401).send({ auth: false, message: 'No token provided.' });
 
   jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
-    if (err) return res.status(403).send({ hasToken: true, auth: false, message: 'Failed to authenticate token.' });
+    // if (err) return res.status(403).redirect('/login');
+    if (err) return res.status(403).send({ hasToken: true, auth: false, message: 'Failed to authenticate token.', error: err });
     req.user = user;
     next();
   });
 }
 
 app.get('/', authenticateToken, (req, res) => {
+  console.log("/ - redirecting...")
   res.status(301).redirect('/dashboard');
 });
 
@@ -141,9 +144,9 @@ app.use('/login', (req, res) => {
         }
         const token = jwt.sign({userId: user._id},
           process.env.TOKEN_SECRET, {
-            expiresIn: '1hr'
+            expiresIn: '20000'
           });
-        console.log("token in server: ", token);
+        console.log("token in server:   ", token);
         res.status(200).json({
           userId: user._id,
           token: token
@@ -187,7 +190,7 @@ app.post('/signup', (req, res) => {
   )
 });
 
-app.get('/load?', (req, res) => {
+app.get('/load?', authenticateToken, (req, res) => {
   if (req.query.p == "") {
     Product.find({}, (err, products) => {
       res.set({
@@ -220,7 +223,7 @@ app.get('/load?', (req, res) => {
   }
 });
 
-app.post('/add?', (req, res) => {
+app.post('/add?', authenticateToken, (req, res) => {
   if (req.query.i === "product") {
     console.log("Data body:", req.body);
     let product = new Product({
@@ -265,7 +268,7 @@ app.post('/add?', (req, res) => {
   }
 });
 
-app.delete('/del?', (req, res) => {
+app.delete('/del?', authenticateToken, (req, res) => {
   console.log(req.query.id);
   if (req.query.i === "product") {
     console.log("Data body:", req.body);
@@ -300,7 +303,7 @@ app.delete('/del?', (req, res) => {
   }
 });
 
-app.get("/dashboard", (req, res) => {
+app.get("/dashboard", authenticateToken, (req, res) => {
   res.send({
     msg: "Hello! responding Dashboad from Node server."
   });

@@ -17,7 +17,8 @@
   "description": "Customized PWA-Based Inventory Management System for BodyTalks.PH",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "deploy": "git status && git add . && git commit -m 'Updates' && git push"
   },
   "repository": {
     "type": "git",
