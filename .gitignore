@@ -29,3 +29,5 @@ manifest.json
 sass/
 html/
 css/
+
+debug-server/
