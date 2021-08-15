@@ -1,9 +1,13 @@
-let mongoose = require('mongoose');
+let mongoose = require("mongoose");
+let uniqValidator = require("mongoose-unique-validator");
+
 let Schema = mongoose.Schema;
 
-let user = new Schema({
-  username: String,
-  password: String
+let userSchema = new Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
 });
 
-module.exports = mongoose.model('User', user);
+userSchema.plugin(uniqValidator);
+
+module.exports = mongoose.model("User", userSchema);

@@ -3,11 +3,20 @@
 // Imports
 const express = require("express");
 const app = express();
-const authenticateToken = require("./services/authenticate-token");
+const checkDbConnection = require("./services/db-check");
+
+// Parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
-const authRoutes = require("./routes/auth-api");
+const authRoutes = require("./routes/auth");
+const itemRoutes = require("./routes/items");
 
+// Check database connection
+app.use(checkDbConnection);
+
+// Necessary CORS headers
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -21,7 +30,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Routes integration
 app.use("/api", authRoutes);
+app.use("/api", itemRoutes);
 
 const normalizePort = (val) => {
   const port = parseInt(val, 10);
@@ -32,6 +43,7 @@ const normalizePort = (val) => {
   return false;
 };
 
+// Error checking
 app.on("error", (error) => {
   if (error.syscall !== "listen") throw error;
 

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 // Mongoose connect
 const uri =
-  "mongodb+srv://JlearnUse:wVmV4RL0am4MuinO@learningcluster0.p98nk.mongodb.net/btph?retryWrites=true&w=majority";
+  "mongodb://127.0.0.1:27017/?snappy=enabled&gssapiServiceName=mongodb";
 const mOpts = {
   useNewUrlParser: true,
   useFindAndModify: false,
@@ -43,5 +43,4 @@ const mOpts = {
 //   isDbConnected = true;
 // });
 
-mongoose.connect(uri, mOpts);
-module.exports = mongoose.connection;
+module.exports = mongoose.connect(uri, mOpts);
