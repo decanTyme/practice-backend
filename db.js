@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 // Mongoose connect
 const uri =
-  "mongodb://127.0.0.1:27017/?snappy=enabled&gssapiServiceName=mongodb";
+  "mongodb+srv://JlearnUse:CnTPBgg2jSAGJlgm@learningcluster0.p98nk.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 const mOpts = {
   useNewUrlParser: true,
   useFindAndModify: false,
