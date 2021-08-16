@@ -4,22 +4,36 @@ const jwt = require("jsonwebtoken");
 // Mongoose model imports
 const User = require("../models/users");
 
-exports.signup = (req, res) => {
-  bcrypt.genSalt(10, (err, salt) =>
-    bcrypt.hash(newUser.password, salt, (err, hash) => {
-      if (err) throw err;
-      let newUser = new User({
+exports.signup = (req, res, next) => {
+  bcrypt
+    .hash(req.body.username, 12)
+    .then((hash) => {
+      const newUser = new User({
         username: req.body.username,
         password: hash,
       });
-      newUser.save().then((value) => {
-        res.json(value);
-      });
+
+      newUser
+        .save()
+        .then(() => {
+          res.json({ message: "User added successfully." });
+        })
+        .catch((error) => {
+          res.status(500).json({
+            error: error,
+            message: "There was an error in saving the user.",
+          });
+        });
     })
-  );
+    .catch((error) => {
+      res.status(500).json({
+        error: error,
+        message: "Unexpected error. Try again later.",
+      });
+    });
 };
 
-exports.login = (req, res) => {
+exports.login = (req, res, next) => {
   User.findOne({ username: req.body.username }).then((user) => {
     if (!user) return res.status(401).json({ error: "Invalid credentials." });
 
@@ -31,7 +45,7 @@ exports.login = (req, res) => {
         expiresIn: "10m",
       });
 
-      var decoded = jwt.decode(token, process.env.TOKEN_SECRET);
+      const decoded = jwt.decode(token, process.env.TOKEN_SECRET);
       res.status(200).json({
         userId: user._id,
         token: token,
@@ -42,12 +56,11 @@ exports.login = (req, res) => {
   });
 };
 
-exports.authenticate = (req, res) => {
+exports.authenticate = (req, res, next) => {
   res.status(200).send({ auth: true });
 };
 
 exports.ping = (req, res, next) => {
-  console.log(req.isDbConnected);
   if (!req.isDbConnected)
     return res
       .status(500)
