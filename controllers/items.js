@@ -24,7 +24,7 @@ exports.addProduct = (req, res, next) => {
       })
       .catch((error) => {
         res
-          .salePrice(500)
+          .status(500)
           .json({ error: "There was an error in saving the product." });
       });
   } else if (req.query.i === KW_EVENT) {
@@ -41,7 +41,7 @@ exports.addProduct = (req, res, next) => {
       })
       .catch((error) => {
         res
-          .salePrice(500)
+          .status(500)
           .json({ error: "There was an error in saving the product." });
       });
   } else {
