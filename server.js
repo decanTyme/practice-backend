@@ -1,183 +1,72 @@
-'use strict';
+"use strict";
 
+// Imports
+const express = require("express");
+const app = express();
+const checkDbConnection = require("./services/db-check");
 
-// const MongoClient = require('mongodb').MongoClient;
-const uri = "mongodb+srv://JlearnUse:wVmV4RL0am4MuinO@learningcluster0.p98nk.mongodb.net/btph?retryWrites=true&w=majority";
-// const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-
-let express = require('express');
-let app = express();
-var path = require('path');
-let mongoose = require('mongoose');
-let cors = require('cors');
-// let db = mongoose.connect("mongodb://localhost/btph", {
-//   useNewUrlParser: true, useUnifiedTopology: true
-// });
-
-app.use(express.static(__dirname + '/'));
+// Parsers
 app.use(express.json());
-app.use(cors());
+app.use(express.urlencoded({ extended: true }));
 
-mongoose.connect(uri, {
-  useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true
-}).then(console.log("Connect successful."));
+// Routes
+const authRoutes = require("./routes/auth");
+const itemRoutes = require("./routes/items");
 
-let Product = require('./js/models/product');
-let Customer = require('./js/models/customer');
-let Event = require('./js/models/events');
+// Check database connection
+app.use(checkDbConnection);
 
-app.get('/aneue-sama', (req, res) => {
-  res.send("Daisukiiiiiiii");
+// Necessary CORS headers
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+  );
+  next();
 });
 
-app.get('/do?', (req, res) => {
-  let q = req.query;
-  if (!q || q === "") {
-    res.status(303).send({
-      error: "Uhh, I think you're in the wrong API here..."
-    });
-  } else {
-    if (req.query.love === "aneue-sama") {
-      res.send("HAAAAAAIII");
-    } else if (req.query.love === "lyn") {
-      res.send("<h1>Sorry...</h1>");
-    } else if (req.query.love === "ken") {
-      res.send("Paglaki ko gusto kong maging kriminal");
-    } else if (req.query.love === "yana") {
-      res.send("HAHAHAHAHAHAAHAHA sorry");
-    } else if (req.query.love === "") {
-      res.send("yes i love myself thank you");
-    } else {
-      res.send("lol who dat");
-    }
+// Routes integration
+app.use("/api", authRoutes);
+app.use("/api", itemRoutes);
+
+const normalizePort = (val) => {
+  const port = parseInt(val, 10);
+
+  if (isNaN(port)) return val;
+  if (port >= 0) return port;
+
+  return false;
+};
+
+// Error checking
+app.on("error", (error) => {
+  if (error.syscall !== "listen") throw error;
+
+  const address = app.address;
+  const bind =
+    typeof address === "string" ? "pipe " + address : "port: " + port;
+
+  switch (error.code) {
+    case "EACCES":
+      console.error(bind + " require elevated priviliges.");
+      process.exit(1);
+    case "EADDRINUSE":
+      console.error(bind + " is already in use.");
+      process.exit(1);
+    default:
+      throw error;
   }
 });
 
-// function sendPro(err, products) {
-//   return res.send(products);
-// }
-
-// function someF(req, res) {
-//   return Product.find({}, sendPro(res));
-// }
-
-// app.get('/products', someF(app.req, app.res));
-
-app.get('/', (req, res) => {
-  res.send();
-});
-
-app.get('/load?', (req, res) => {
-  if (req.query.p == "") {
-    Product.find({}, (err, products) => {
-      res.set({
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      }).send(products);
-    });
-  } else if (req.query.p == "events") {
-    Event.find({}, (err, event) => {
-      res.set({
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      }).send(event);
-    });
-  } else {
-    Product.find({_id:req.query.p}, (err, product) => {
-      if (err) {
-        res.status(500).send({error: `There is no product called ${req.query.p} found.`});
-      } else {
-        res.set({
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        }).send(product);
-      }
-    });
-  }
-});
-
-app.post('/add?', (req, res) => {
-  if (req.query.i === "product") {
-    console.log("Data body:", req.body);
-    let product = new Product({
-      name: req.body.name,
-      code: req.body.code,
-      class: req.body.class,
-      category: req.body.category,
-      quantity: req.body.quantity,
-      price: req.body.price,
-      salePrice: req.body.salePrice
-    });
-
-    product.save((err, savedProduct) => {
-      if (err) {
-        res.status(500).send({
-          error: "There was an error in saving the product."
-        });
-      } else {
-        res.send(savedProduct);
-      }
-    });
-  } else if (req.query.i === "event") {
-    let event = new Event({
-      name: req.body.name,
-      date: req.body.date,
-      venue: req.body.venue
-    });
-
-    event.save((err, savedEvent) => {
-      if (err) {
-        res.status(500).send({
-          error: "There was an error in saving the event."
-        });
-      } else {
-        res.send(savedEvent);
-      }
-    });
-  } else {
-    res.status(404).send({error:"Not found."})
-  }
-});
-
-app.delete('/del?', (req, res) => {
-  console.log(req.query.id);
-  if (req.query.i === "product") {
-    console.log("Data body:", req.body);
-
-    let product = Product.find({_id: req.body._id});
-    product.deleteOne((err, product) => {
-      if (err) {
-        res.status(500).send({
-          error: "There was an error in deleting the product."
-        });
-      } else {
-        res.send(product);
-      }
-    });
-
-  } else if (req.query.i === "event") {
-    event.save((err, savedEvent) => {
-      if (err) {
-        res.status(500).send({
-          error: "There was an error in saving the event."
-        });
-      } else {
-        res.send(savedEvent);
-      }
-    });
-  } else {
-    res.status(404).send({error:"Not found."})
-  }
-});
-
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname + '/html/inv-main.html'));
-});
-
-let port = 8080;
+let port = normalizePort(process.env.PORT || "8080");
 
 app.listen(port, () => {
-  console.log(`BTPH API listening on port ${port}`);
+  const address = app.address;
+  const bind = typeof address === "string" ? "pipe " + address : "port " + port;
+  console.log(`BTPH API listening on ${bind}`);
 });
-
-// pokeName.innerHTML = "Hello";
