@@ -6,11 +6,14 @@ const User = require("../models/users");
 
 exports.signup = (req, res, next) => {
   bcrypt
-    .hash(req.body.username, 12)
+    .hash(req.body.username, 10)
     .then((hash) => {
       const newUser = new User({
         username: req.body.username,
         password: hash,
+        firstname: req.body.firstname,
+        lastname: req.body.lastname,
+        role: req.body.role,
       });
 
       newUser
@@ -34,15 +37,19 @@ exports.signup = (req, res, next) => {
 };
 
 exports.login = (req, res, next) => {
-  User.findOne({ username: req.body.username }).then((user) => {
+  const { username, password } = req.body;
+  let longerSignin = req.body.rememberUser;
+  User.findOne({ username: username }).then((user) => {
     if (!user) return res.status(401).json({ error: "Invalid credentials." });
 
-    bcrypt.compare(req.body.password, user.password).then((valid) => {
+    bcrypt.compare(password, user.password).then((valid) => {
       if (!valid)
         return res.status(401).json({ error: "Invalid credentials." });
 
+      let tokenExpiry = "5m";
+      if (longerSignin) tokenExpiry = "24h";
       const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET, {
-        expiresIn: "10m",
+        expiresIn: tokenExpiry,
       });
 
       const decoded = jwt.decode(token, process.env.TOKEN_SECRET);

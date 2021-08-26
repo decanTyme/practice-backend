@@ -6,7 +6,7 @@ const KW_EVENT = "event";
 const KW_PRODUCT = "product";
 
 exports.addProduct = (req, res, next) => {
-  if (req.query.i === KW_PRODUCT) {
+  if (req.query.item_ === KW_PRODUCT) {
     const product = new Product({
       name: req.body.name,
       code: req.body.code,
@@ -20,14 +20,15 @@ exports.addProduct = (req, res, next) => {
     product
       .save()
       .then((savedProduct) => {
-        res.status(201).json(savedProduct);
+        res.status(201).json({ product: savedProduct, success: true });
       })
       .catch((error) => {
-        res
-          .status(500)
-          .json({ error: "There was an error in saving the product." });
+        res.status(500).json({
+          error: error,
+          msg: "There was an error in saving the product.",
+        });
       });
-  } else if (req.query.i === KW_EVENT) {
+  } else if (req.query.item_ === KW_EVENT) {
     const event = new Event({
       name: req.body.name,
       date: req.body.date,
@@ -74,7 +75,7 @@ exports.updateProduct = (req, res, next) => {
 };
 
 exports.deleteProduct = (req, res, next) => {
-  if (req.query.i === KW_PRODUCT) {
+  if (req.query.item_ === KW_PRODUCT) {
     Product.deleteOne({ _id: req.query._id })
       .then((deletedProduct) => {
         res.status(200).json({
@@ -88,7 +89,7 @@ exports.deleteProduct = (req, res, next) => {
           message: "There was an error in deleting the product.",
         });
       });
-  } else if (req.query.i === KW_EVENT) {
+  } else if (req.query.item_ === KW_EVENT) {
     Event.deleteOne({ _id: req.query._id })
       .then((deletedEvent) => {
         res.status(200).json({
