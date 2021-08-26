@@ -1,39 +1,8 @@
 "use strict";
 
-// Imports
-const express = require("express");
-const app = express();
-const checkDbConnection = require("./services/db-check");
+const server = require("./app");
 
-// Parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Routes
-const authRoutes = require("./routes/auth");
-const itemRoutes = require("./routes/items");
-
-// Check database connection
-app.use(checkDbConnection);
-
-// Necessary CORS headers
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-  );
-  next();
-});
-
-// Routes integration
-app.use("/api", authRoutes);
-app.use("/api", itemRoutes);
-
+// Checks if port is valid
 const normalizePort = (val) => {
   const port = parseInt(val, 10);
 
@@ -44,10 +13,10 @@ const normalizePort = (val) => {
 };
 
 // Error checking
-app.on("error", (error) => {
+server.on("error", (error) => {
   if (error.syscall !== "listen") throw error;
 
-  const address = app.address;
+  const address = server.address;
   const bind =
     typeof address === "string" ? "pipe " + address : "port: " + port;
 
@@ -65,8 +34,8 @@ app.on("error", (error) => {
 
 let port = normalizePort(process.env.PORT || "8080");
 
-app.listen(port, () => {
-  const address = app.address;
+server.listen(port, () => {
+  const address = server.address;
   const bind = typeof address === "string" ? "pipe " + address : "port " + port;
   console.log(`BTPH API listening on ${bind}`);
 });
