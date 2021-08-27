@@ -6,8 +6,15 @@ const User = require("../models/users");
 
 exports.signup = (req, res, next) => {
   bcrypt
-    .hash(req.body.username, 10)
+    .hash(req.body.password, 69)
     .then((hash) => {
+      bcrypt.compare(req.body.password, hash).then((valid) => {
+        if (!valid)
+          return res.status(500).json({
+            message: "Unexpected error. Try again later.",
+          });
+      });
+
       const newUser = new User({
         username: req.body.username,
         password: hash,
@@ -15,6 +22,8 @@ exports.signup = (req, res, next) => {
         lastname: req.body.lastname,
         role: req.body.role,
       });
+
+      console.log(newUser);
 
       newUser
         .save()
@@ -37,14 +46,13 @@ exports.signup = (req, res, next) => {
 };
 
 exports.login = (req, res, next) => {
-  const { username, password } = req.body;
+  const client = req.body;
   let longerSignin = req.body.rememberUser;
-  User.findOne({ username: username }).then((user) => {
-    if (!user) return res.status(401).json({ error: "Invalid credentials." });
+  User.findOne({ username: client.username }).then((user) => {
+    if (!user) return res.status(401).json({ error: "Invalid user." });
 
-    bcrypt.compare(password, user.password).then((valid) => {
-      if (!valid)
-        return res.status(401).json({ error: "Invalid credentials." });
+    bcrypt.compare(client.password, user.password).then((valid) => {
+      if (!valid) return res.status(401).json({ error: "Invalid pw." });
 
       let tokenExpiry = "5m";
       if (longerSignin) tokenExpiry = "24h";
