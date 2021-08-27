@@ -49,10 +49,10 @@ exports.login = (req, res, next) => {
   const client = req.body;
   let longerSignin = req.body.rememberUser;
   User.findOne({ username: client.username }).then((user) => {
-    if (!user) return res.status(401).json({ error: "Invalid user." });
+    if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     bcrypt.compare(client.password, user.password).then((valid) => {
-      if (!valid) return res.status(401).json({ error: "Invalid pw." });
+      if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
       let tokenExpiry = "5m";
       if (longerSignin) tokenExpiry = "24h";
