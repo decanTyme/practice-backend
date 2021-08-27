@@ -6,7 +6,7 @@ const User = require("../models/users");
 
 exports.signup = (req, res, next) => {
   bcrypt
-    .hash(req.body.password, 69)
+    .hash(req.body.password, 12)
     .then((hash) => {
       bcrypt.compare(req.body.password, hash).then((valid) => {
         if (!valid)
