@@ -61,6 +61,15 @@ exports.login = (req, res, next) => {
       });
 
       const decoded = jwt.decode(token, process.env.TOKEN_SECRET);
+
+      const tokenCookie =
+        token +
+        "; expires=" +
+        new Date(decoded.exp * 1000).toUTCString() +
+        "; secure; httponly; samesite=strict";
+
+      res.setHeader("Set-Cookie", tokenCookie);
+
       res.status(200).json({
         userId: user._id,
         token: token,
