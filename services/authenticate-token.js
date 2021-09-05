@@ -13,7 +13,6 @@ function verifyToken(req, res, next) {
           message: "Failed to authenticate token.",
         });
 
-      // console.log(req.body.userId, decoded.userId);
       if (req.body.userId && req.body.userId !== decoded.userId) {
         res.status(401).json({ auth: false, message: "Invalid session." });
         throw "EINVSESS";
