@@ -12,15 +12,18 @@ const itemRoutes = require("./routes/items");
 
 // Necessary CORS headers
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization"
+    "Origin, Content, Accept, Content-Type, Authorization, Credentials, , Access-Control-Expose-Headers"
   );
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, PATCH, OPTIONS"
   );
+  res.setHeader("Access-Control-Allow-Credentials", true);
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Cache-Control", "no-cache, must-revalidate");
   next();
 });
 
