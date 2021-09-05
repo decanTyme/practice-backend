@@ -1,17 +1,19 @@
-let mongoose = require("mongoose");
-let uniqValidator = require("mongoose-unique-validator");
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+const ObjectId = mongoose.Types.ObjectId;
+const uniqueValidator = require("mongoose-unique-validator");
 
-let Schema = mongoose.Schema;
-
-let userSchema = new Schema({
+const UserSchema = new Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   firstname: { type: String, required: true },
   lastname: { type: String, required: true },
   role: { type: String, required: true },
-  profileImgUrl: { type: String },
+  bio: { type: String },
+  profileImgURL: { type: String },
+  business: { type: ObjectId, ref: "Business" },
 });
 
-userSchema.plugin(uniqValidator);
+UserSchema.plugin(uniqueValidator);
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model("User", UserSchema);

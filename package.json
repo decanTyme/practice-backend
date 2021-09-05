@@ -1,40 +1,30 @@
 {
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^5.15.4",
     "bcrypt": "^5.0.1",
-    "bcryptjs": "^2.4.3",
+    "cookie": "^0.4.1",
+    "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
-    "dotenv": "^8.6.0",
+    "csurf": "^1.11.0",
+    "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "express-query-boolean": "^2.0.0",
     "jsonwebtoken": "^8.5.1",
-    "mongodb": "^3.6.11",
-    "mongoose": "^5.13.7",
-    "mongoose-unique-validator": "^2.0.3",
-    "nodemon": "^2.0.12",
-    "whatwg-fetch": "^3.6.2",
-    "xmlhttprequest": "^1.8.0"
+    "mongoose": "^6.0.12",
+    "mongoose-unique-validator": "^3.0.0"
   },
   "name": "inventory-sys-web-api",
-  "version": "0.5.0",
+  "version": "1.2.0",
   "description": "BodyTalks.PH API",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon server.js",
-    "deploy": "git status && git add . && git commit -m 'Updates' && git push"
+    "start": "node server.js",
+    "dev": "nodemon main",
+    "deploy": "git status && git push heroku base:master"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/epcraft93/inventory-sys-web.git"
-  },
-  "keywords": [
-    "ims",
-    "pwa",
-    "btph"
-  ],
   "author": "Danry Ague",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/epcraft93/inventory-sys-web/issues"
-  },
-  "homepage": "https://github.com/epcraft93/inventory-sys-web#readme"
+  "devDependencies": {
+    "eslint": "^8.2.0",
+    "eslint-config-google": "^0.14.0"
+  }
 }

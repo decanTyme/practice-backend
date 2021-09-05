@@ -1,11 +1,8 @@
 const mongoose = require("mongoose");
 
 // Mongoose connect
-const uri =
-  "mongodb+srv://JlearnUse:CnTPBgg2jSAGJlgm@learningcluster0.p98nk.mongodb.net/btph?retryWrites=true&w=majority";
-const mOpts = {
+const opts = {
   useNewUrlParser: true,
-  useFindAndModify: false,
   useUnifiedTopology: true,
 };
 
@@ -43,4 +40,4 @@ const mOpts = {
 //   isDbConnected = true;
 // });
 
-module.exports = mongoose.connect(uri, mOpts);
+module.exports = connect;
