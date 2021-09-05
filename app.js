@@ -14,7 +14,7 @@ const itemRoutes = require("./routes/items");
 app.use((req, res, next) => {
   res.setHeader(
     "Access-Control-Allow-Origin",
-    "https://bodytalks-ph.herokuapp.com/"
+    "https://bodytalks-ph.herokuapp.com"
   );
   res.setHeader(
     "Access-Control-Allow-Headers",
