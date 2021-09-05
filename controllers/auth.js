@@ -63,7 +63,7 @@ exports.login = (req, res, next) => {
       const decoded = jwt.decode(token, process.env.TOKEN_SECRET);
 
       const tokenCookie =
-        "__Host-auth_token=" +
+        "__Host-auth_token__=" +
         token +
         "; Max-Age=86400; Path=/" +
         "; expires=" +
