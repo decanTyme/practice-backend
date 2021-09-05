@@ -12,7 +12,10 @@ const itemRoutes = require("./routes/items");
 
 // Necessary CORS headers
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "https://bodytalks-ph.herokuapp.com/"
+  );
   res.setHeader(
     "Access-Control-Allow-Headers",
     "Origin, Content, Accept, Content-Type, Authorization, Credentials, , Access-Control-Expose-Headers"
