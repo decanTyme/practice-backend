@@ -23,8 +23,6 @@ exports.signup = (req, res, next) => {
         role: req.body.role,
       });
 
-      console.log(newUser);
-
       newUser
         .save()
         .then(() => {
@@ -47,15 +45,14 @@ exports.signup = (req, res, next) => {
 
 exports.login = (req, res, next) => {
   const client = req.body;
-  let longerSignin = req.body.rememberUser;
+  const longerSignin = JSON.parse(client.rememberUser);
   User.findOne({ username: client.username }).then((user) => {
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     bcrypt.compare(client.password, user.password).then((valid) => {
       if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
-      let tokenExpiry = "5m";
-      if (longerSignin) tokenExpiry = "24h";
+      const tokenExpiry = longerSignin ? "24h" : "5m";
       const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET, {
         expiresIn: tokenExpiry,
       });
@@ -63,23 +60,45 @@ exports.login = (req, res, next) => {
       const decoded = jwt.decode(token, process.env.TOKEN_SECRET);
 
       const tokenCookie =
-        "__Host-auth_token__=" +
+        "auth_token__=" +
         token +
         "; Max-Age=86400; Path=/" +
-        "; expires=" +
+        "; Expires=" +
         new Date(decoded.exp * 1000).toUTCString() +
         "; Secure; HttpOnly; SameSite=None";
 
       res.setHeader("Set-Cookie", tokenCookie);
+      console.log(longerSignin, tokenExpiry);
 
       res.status(200).json({
         userId: user._id,
-        token: token,
         iat: decoded.iat,
         exp: decoded.exp,
       });
     });
   });
+};
+
+exports.signoff = (req, res, next) => {
+  const clientBody = req.body;
+  const clientId = clientBody.userId;
+  const clientToken = req.headers.cookie
+    .split(";")
+    .find((cookie) => "auth_token__")
+    .split("=")[1];
+
+  const decoded = jwt.decode(clientToken, process.env.TOKEN_SECRET);
+  console.log(req.path, clientToken);
+
+  const nullCookie =
+    "auth_token__=null" +
+    "; Max-Age=0; Path=/" +
+    "; Expires=" +
+    new Date("Thu, 01 Jan 1970 00:00:00 GMT").toUTCString() +
+    "; Secure; HttpOnly; SameSite=None";
+
+  res.setHeader("Set-Cookie", nullCookie);
+  res.status(200).json({ signoff: true });
 };
 
 exports.authenticate = (req, res, next) => {

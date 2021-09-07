@@ -2,19 +2,32 @@ let jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
 
+const nullCookie =
+  "auth_token__=null" +
+  "; Max-Age=0; Path=/" +
+  "; Expires=" +
+  new Date("Thu, 01 Jan 1970 00:00:00 GMT").toUTCString() +
+  "; Secure; HttpOnly; SameSite=None";
+
 function verifyToken(req, res, next) {
   try {
-    const token = req.headers.cookie.split(";")[0].split("=")[1];
+    const token = req.headers.cookie
+      .split(";")
+      .find((cookie) => "auth_token__")
+      .split("=")[1];
 
     jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
-      if (err)
+      if (err) {
+        res.setHeader("Set-Cookie", nullCookie);
         return res.status(401).send({
           auth: false,
           message: "Failed to authenticate token.",
         });
+      }
 
       if (req.body.userId && req.body.userId !== decoded.userId) {
-        res.status(401).json({ auth: false, message: "Invalid session." });
+        res.setHeader("Set-Cookie", nullCookie);
+        res.status(401).send({ auth: false, message: "Invalid session." });
         throw "EINVSESS";
       } else {
         req.authDecoded = decoded;

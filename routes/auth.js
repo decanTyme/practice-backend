@@ -9,9 +9,10 @@ const router = express.Router();
 router.get("/ping", authenticateToken, checkDbConnection, authCtrl.ping);
 
 // Authentication routes
-router.post("/login", authCtrl.login);
 router.post("/signup", authCtrl.signup);
-router.get("/authenticate", authenticateToken, authCtrl.authenticate);
+router.post("/login", authCtrl.login);
+router.post("/signoff", authenticateToken, authCtrl.signoff);
+router.post("/authenticate", authenticateToken, authCtrl.authenticate);
 
 const User = require("../models/users");
 router.post("/user", authenticateToken, (req, res, next) => {

@@ -18,7 +18,7 @@ app.use((req, res, next) => {
   );
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "Origin, Content, Accept, Content-Type, Authorization, Credentials, , Access-Control-Expose-Headers"
+    "Origin, Content, Accept, Content-Type, Credentials"
   );
   res.setHeader(
     "Access-Control-Allow-Methods",
