@@ -49,6 +49,12 @@ exports.login = (req, res, next) => {
   User.findOne({ username: client.username }).then((user) => {
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
+    const userData = {
+      firstname: user.firstname,
+      lastname: user.lastname,
+      role: user.role,
+    };
+
     bcrypt.compare(client.password, user.password).then((valid) => {
       if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
@@ -60,7 +66,7 @@ exports.login = (req, res, next) => {
       const decoded = jwt.decode(token, process.env.TOKEN_SECRET);
 
       const tokenCookie =
-        "auth_token__=" +
+        "__auth_token=" +
         token +
         "; Max-Age=86400; Path=/" +
         "; Expires=" +
@@ -72,6 +78,7 @@ exports.login = (req, res, next) => {
 
       res.status(200).json({
         userId: user._id,
+        userData: userData,
         iat: decoded.iat,
         exp: decoded.exp,
       });
@@ -84,14 +91,14 @@ exports.signoff = (req, res, next) => {
   const clientId = clientBody.userId;
   const clientToken = req.headers.cookie
     .split(";")
-    .find((cookie) => "auth_token__")
+    .find((cookie) => "__auth_token")
     .split("=")[1];
 
   const decoded = jwt.decode(clientToken, process.env.TOKEN_SECRET);
   console.log(req.path, clientToken);
 
   const nullCookie =
-    "auth_token__=null" +
+    "__auth_token=null" +
     "; Max-Age=0; Path=/" +
     "; Expires=" +
     new Date("Thu, 01 Jan 1970 00:00:00 GMT").toUTCString() +

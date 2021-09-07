@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const nullCookie =
-  "auth_token__=null" +
+  "__auth_token=null" +
   "; Max-Age=0; Path=/" +
   "; Expires=" +
   new Date("Thu, 01 Jan 1970 00:00:00 GMT").toUTCString() +
@@ -13,7 +13,7 @@ function verifyToken(req, res, next) {
   try {
     const token = req.headers.cookie
       .split(";")
-      .find((cookie) => "auth_token__")
+      .find((cookie) => "__auth_token")
       .split("=")[1];
 
     jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
