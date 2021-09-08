@@ -14,19 +14,6 @@ router.post("/login", authCtrl.login);
 router.post("/signoff", authenticateToken, authCtrl.signoff);
 router.post("/authenticate", authenticateToken, authCtrl.authenticate);
 
-const User = require("../models/users");
-router.post("/user", authenticateToken, (req, res, next) => {
-  User.findOne({ _id: req.body.userId })
-    .then((user) => {
-      res.status(200).json({
-        firstname: user.firstname,
-        lastname: user.lastname,
-        role: user.role,
-      });
-    })
-    .catch((error) => {
-      res.status(404).json({ error: error, msg: "User not found." });
-    });
-});
+router.post("/user", authenticateToken, authCtrl.user);
 
 module.exports = router;

@@ -76,17 +76,28 @@ exports.updateProduct = (req, res, next) => {
 
 exports.deleteProduct = (req, res, next) => {
   if (req.query.item_ === KW_PRODUCT) {
-    Product.deleteOne({ _id: req.query._id })
-      .then((deletedProduct) => {
-        res.status(200).json({
-          deletedItem: deletedProduct,
-          message: "Successfully deleted the item.",
-        });
+    Product.findById(req.query._id)
+      .then((product) => {
+        console.log("Deleting:", req.query._id, product);
+        if (!product) throw `No product of id ${req.query._id} found.`;
+        Product.deleteOne({ _id: req.query._id })
+          .then((deletedProduct) => {
+            res.status(200).json({
+              deletedItem: deletedProduct,
+              message: "Successfully deleted the item.",
+            });
+          })
+          .catch((error) => {
+            res.status(500).json({
+              error: error,
+              message: "There was an error in deleting the product.",
+            });
+          });
       })
       .catch((error) => {
         res.status(500).json({
           error: error,
-          message: "There was an error in deleting the product.",
+          message: error.message,
         });
       });
   } else if (req.query.item_ === KW_EVENT) {

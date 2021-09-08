@@ -38,7 +38,7 @@ function verifyToken(req, res, next) {
     if (error instanceof TypeError) {
       res.status(418).json({
         auth: false,
-        message: "No token provided.",
+        message: "No authentication token provided.",
       });
     }
   }

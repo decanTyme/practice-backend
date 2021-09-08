@@ -120,3 +120,17 @@ exports.ping = (req, res, next) => {
 
   return res.json({ auth: true });
 };
+
+exports.user = (req, res, next) => {
+  User.findOne({ _id: req.body.userId })
+    .then((user) => {
+      res.status(200).json({
+        firstname: user.firstname,
+        lastname: user.lastname,
+        role: user.role,
+      });
+    })
+    .catch((error) => {
+      res.status(404).json({ error: error, msg: "User not found." });
+    });
+};
