@@ -10,9 +10,11 @@ exports.addProduct = (req, res, next) => {
     const product = new Product({
       name: req.body.name,
       code: req.body.code,
+      brand: req.body.brand,
       class: req.body.class,
       category: req.body.category,
       quantity: req.body.quantity,
+      quantityType: req.body.quantityType,
       price: req.body.price,
       salePrice: req.body.salePrice,
     });
@@ -55,9 +57,11 @@ exports.updateProduct = (req, res, next) => {
     _id: req.body.id,
     name: req.body.name,
     code: req.body.code,
+    brand: req.body.brand,
     class: req.body.class,
     category: req.body.category,
     quantity: req.body.quantity,
+    quantityType: req.body.quantityType,
     price: req.body.price,
     salePrice: req.body.salePrice,
   });
@@ -78,7 +82,6 @@ exports.deleteProduct = (req, res, next) => {
   if (req.query.item_ === KW_PRODUCT) {
     Product.findById(req.query._id)
       .then((product) => {
-        console.log("Deleting:", req.query._id, product);
         if (!product) throw `No product of id ${req.query._id} found.`;
         Product.deleteOne({ _id: req.query._id })
           .then((deletedProduct) => {

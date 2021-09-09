@@ -74,7 +74,6 @@ exports.login = (req, res, next) => {
         "; Secure; HttpOnly; SameSite=None";
 
       res.setHeader("Set-Cookie", tokenCookie);
-      console.log(longerSignin, tokenExpiry);
 
       res.status(200).json({
         userId: user._id,
@@ -95,7 +94,6 @@ exports.signoff = (req, res, next) => {
     .split("=")[1];
 
   const decoded = jwt.decode(clientToken, process.env.TOKEN_SECRET);
-  console.log(req.path, clientToken);
 
   const nullCookie =
     "__auth_token=null" +
