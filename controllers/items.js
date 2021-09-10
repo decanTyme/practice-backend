@@ -14,7 +14,7 @@ exports.addProduct = (req, res, next) => {
       class: req.body.class,
       category: req.body.category,
       quantity: req.body.quantity,
-      quantityType: req.body.quantityType,
+      unit: req.body.unit,
       price: req.body.price,
       salePrice: req.body.salePrice,
     });
@@ -39,8 +39,8 @@ exports.addProduct = (req, res, next) => {
 
     event
       .save()
-      .then((savedProduct) => {
-        res.status(201).json(savedProduct);
+      .then((savedEvent) => {
+        res.status(201).json(savedEvent);
       })
       .catch((error) => {
         res
@@ -61,14 +61,16 @@ exports.updateProduct = (req, res, next) => {
     class: req.body.class,
     category: req.body.category,
     quantity: req.body.quantity,
-    quantityType: req.body.quantityType,
+    unit: req.body.unit,
     price: req.body.price,
     salePrice: req.body.salePrice,
   });
 
   Product.updateOne({ _id: req.body.id }, newProduct)
     .then(() => {
-      res.status(201).json({ message: "Product updated successfully." });
+      res
+        .status(201)
+        .json({ success: true, message: "Product updated successfully." });
     })
     .catch((error) => {
       res.status(400).json({
@@ -87,6 +89,7 @@ exports.deleteProduct = (req, res, next) => {
           .then((deletedProduct) => {
             res.status(200).json({
               deletedItem: deletedProduct,
+              success: true,
               message: "Successfully deleted the item.",
             });
           })
@@ -108,6 +111,7 @@ exports.deleteProduct = (req, res, next) => {
       .then((deletedEvent) => {
         res.status(200).json({
           deletedItem: deletedEvent,
+          success: true,
           message: "Successfully deleted the event.",
         });
       })
@@ -123,7 +127,7 @@ exports.deleteProduct = (req, res, next) => {
 exports.load = (req, res, next) => {
   let uriQueries = req.query;
   if (uriQueries.item_ == KW_PRODUCT + "s") {
-    Product.find()
+    Product.find({})
       .then((products) => {
         res.json(products);
       })

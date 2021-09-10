@@ -8,7 +8,7 @@ let product = new Schema({
   brand: { type: String, required: true },
   name: { type: String, required: true },
   quantity: { type: Number, required: true },
-  quantityType: { type: String, required: false },
+  unit: { type: String, required: true },
   price: { type: Number, required: true },
   salePrice: { type: Number, required: false },
 });

@@ -65,13 +65,7 @@ exports.login = (req, res, next) => {
 
       const decoded = jwt.decode(token, process.env.TOKEN_SECRET);
 
-      const tokenCookie =
-        "__auth_token=" +
-        token +
-        "; Max-Age=86400; Path=/" +
-        "; Expires=" +
-        new Date(decoded.exp * 1000).toUTCString() +
-        "; Secure; HttpOnly; SameSite=None";
+      const tokenCookie = `__auth_token=${token}; Max-Age=86400; Path=/; Secure; HttpOnly; SameSite=None`;
 
       res.setHeader("Set-Cookie", tokenCookie);
 
@@ -86,15 +80,6 @@ exports.login = (req, res, next) => {
 };
 
 exports.signoff = (req, res, next) => {
-  const clientBody = req.body;
-  const clientId = clientBody.userId;
-  const clientToken = req.headers.cookie
-    .split(";")
-    .find((cookie) => "__auth_token")
-    .split("=")[1];
-
-  const decoded = jwt.decode(clientToken, process.env.TOKEN_SECRET);
-
   const nullCookie =
     "__auth_token=null" +
     "; Max-Age=0; Path=/" +
