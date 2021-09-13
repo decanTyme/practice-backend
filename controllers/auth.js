@@ -1,8 +1,10 @@
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const cookie = require("cookie");
+const generateAccessToken = require("../services/generate-token");
 
 // Mongoose model imports
 const User = require("../models/users");
+const RefreshToken = require("../models/refresh-token");
 
 exports.signup = (req, res, next) => {
   bcrypt
@@ -11,7 +13,7 @@ exports.signup = (req, res, next) => {
       bcrypt.compare(req.body.password, hash).then((valid) => {
         if (!valid)
           return res.status(500).json({
-            message: "Unexpected error. Try again later.",
+            message: "Unexpected error. Please try again later.",
           });
       });
 
@@ -38,7 +40,7 @@ exports.signup = (req, res, next) => {
     .catch((error) => {
       res.status(500).json({
         error: error,
-        message: "Unexpected error. Try again later.",
+        message: "Unexpected error. Please try again later.",
       });
     });
 };
@@ -46,53 +48,123 @@ exports.signup = (req, res, next) => {
 exports.login = (req, res, next) => {
   const client = req.body;
   const longerSignin = JSON.parse(client.rememberUser);
+
+  /* Try to find user in database */
   User.findOne({ username: client.username }).then((user) => {
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
+    /* Get the user data to send back to user */
     const userData = {
       firstname: user.firstname,
       lastname: user.lastname,
       role: user.role,
     };
 
+    /* Validate the password */
     bcrypt.compare(client.password, user.password).then((valid) => {
       if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
-      const tokenExpiry = longerSignin ? "24h" : "5m";
-      const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET, {
-        expiresIn: tokenExpiry,
-      });
+      /* Sign a new access token, serialize to cookie, and set to cookie header */
+      res.setHeader(
+        "Set-Cookie",
+        cookie.serialize("__auth_token", generateAccessToken(user._id), {
+          maxAge: 1200,
+          path: "/",
+          secure: true,
+          httpOnly: true,
+          sameSite: "none",
+        })
+      );
 
-      const decoded = jwt.decode(token, process.env.TOKEN_SECRET);
+      /* If the user wants a longer signin, sign a new refresh token */
+      const refToken = generateAccessToken(user._id, "REFRESH_TOKEN");
+      const newRefToken = new RefreshToken({ token: refToken });
 
-      const tokenCookie = `__auth_token=${token}; Max-Age=86400; Path=/; Secure; HttpOnly; SameSite=None`;
+      /* Save valid refresh token to database */
+      newRefToken
+        .save()
+        .then(() => console.log("Refresh token added to DB."))
+        .catch(() => {
+          return res.status(500).json({
+            message:
+              "There was an authentication error. Please try again later.",
+          });
+        });
 
-      res.setHeader("Set-Cookie", tokenCookie);
-
-      res.status(200).json({
+      return res.status(200).json({
         userId: user._id,
-        userData: userData,
-        iat: decoded.iat,
-        exp: decoded.exp,
+        refToken,
+        userData,
       });
     });
   });
 };
 
 exports.signoff = (req, res, next) => {
-  const nullCookie =
-    "__auth_token=null" +
-    "; Max-Age=0; Path=/" +
-    "; Expires=" +
-    new Date("Thu, 01 Jan 1970 00:00:00 GMT").toUTCString() +
-    "; Secure; HttpOnly; SameSite=None";
-
-  res.setHeader("Set-Cookie", nullCookie);
-  res.status(200).json({ signoff: true });
+  RefreshToken.deleteOne({ token: req.body.refToken })
+    .then(() => {
+      console.log("Successfully invalidated the refresh token.");
+      res
+        .status(200)
+        .setHeader(
+          "Set-Cookie",
+          cookie.serialize("__auth_token", null, {
+            maxAge: 0,
+            path: "/",
+            secure: true,
+            httpOnly: true,
+            sameSite: "none",
+          })
+        )
+        .json({ signoff: true });
+    })
+    .catch((error) => {
+      // console.log(error);
+      return res.status(500).json({ signoff: true });
+    });
 };
 
 exports.authenticate = (req, res, next) => {
-  res.status(200).send({ auth: true });
+  if (req.body.refToken === "" || req.body.userId === "")
+    return res.status(401).json({ auth: false, message: "Please log in." });
+
+  User.findOne({ _id: req.body.userId })
+    .then((user) => {
+      if (!user)
+        return res
+          .status(403)
+          .json({ auth: false, message: "Invalid session." });
+
+      RefreshToken.findOne({ token: req.body.refToken })
+        .then((token) => {
+          if (!token)
+            return res.status(403).json({
+              auth: false,
+              invalidSession: true,
+              message: "Invalid session.",
+            });
+
+          res
+            .setHeader(
+              "Set-Cookie",
+              cookie.serialize("__auth_token", generateAccessToken(user._id), {
+                maxAge: 1200,
+                path: "/",
+                secure: true,
+                httpOnly: true,
+                sameSite: "none",
+              })
+            )
+            .status(200)
+            .json({ auth: true });
+        })
+        .catch(() => {
+          res.status(403).json({ auth: false, message: "Invalid session." });
+        });
+    })
+    .catch(() => {
+      res.status(401).json({ auth: false, message: "Please log in." });
+    });
 };
 
 exports.ping = (req, res, next) => {

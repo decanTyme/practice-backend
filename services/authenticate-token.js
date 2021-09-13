@@ -1,63 +1,54 @@
-let jwt = require("jsonwebtoken");
-const dotenv = require("dotenv");
-dotenv.config();
+const jwt = require("jsonwebtoken");
+const cookie = require("cookie");
 
-const nullCookie =
-  "__auth_token=null" +
-  "; Max-Age=0; Path=/" +
-  "; Expires=" +
-  new Date("Thu, 01 Jan 1970 00:00:00 GMT").toUTCString() +
-  "; Secure; HttpOnly; SameSite=None";
-
-const getCookie = (cookies, type) => {
-  let cookieArr = cookies.split(";");
-
-  for (let i = 0; i < cookieArr.length; i++) {
-    let cookiePair = cookieArr[i].split("=");
-    if (type === cookiePair[0].trim()) {
-      return decodeURIComponent(cookiePair[1]);
-    }
-  }
-  return null;
-};
+const nullCookie = cookie.serialize("__auth_token", null, {
+  maxAge: 0,
+  expires: new Date("Thu, 01 Jan 1970 00:00:00 GMT"),
+  path: "/",
+  secure: true,
+  httpOnly: true,
+  sameSite: "none",
+});
 
 function verifyToken(req, res, next) {
-  if (req.path !== "/signoff") {
-    try {
-      /* Get auth cookie from headers */
-      const token = getCookie(req.headers.cookie, "__auth_token");
+  try {
+    /* Get auth cookie from headers */
+    const token = req.cookies.__auth_token;
 
-      jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
-        if (err) {
+    /* If token is undefined or null, throw an error */
+    if (!token) throw new Error();
+
+    /* If there is a token, verify */
+    jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+        if (req.path === "/authenticate") {
           res.setHeader("Set-Cookie", nullCookie);
-          return res.status(401).send({
-            hasToken: true,
-            auth: false,
-            message: "Failed to authenticate token.",
-          });
         }
 
-        if (req.body.userId && req.body.userId !== decoded.userId) {
-          res.setHeader("Set-Cookie", nullCookie);
-          res
-            .status(401)
-            .send({ hasToken: true, auth: false, message: "Invalid session." });
-          throw "EINVSESS";
-        } else {
-          req.authDecoded = decoded;
-          next();
-        }
-      });
-    } catch (error) {
-      if (error instanceof TypeError) {
-        res.status(418).json({
-          hasToken: false,
+        return res.status(403).send({
+          hasToken: true,
           auth: false,
-          message: "No authentication token provided.",
+          message: "Session expired. Please login again.",
         });
       }
-    }
-  } else next();
+
+      if (req.body.userId && req.body.userId !== decoded.userId) {
+        res
+          .status(401)
+          .send({ hasToken: true, auth: false, message: "Invalid session." });
+        throw "EINVSESS";
+      } else {
+        req.authDecoded = decoded;
+        next();
+      }
+    });
+  } catch (error) {
+    res.status(418).json({
+      hasToken: false,
+      auth: false,
+      message: "No authentication token provided.",
+    });
+  }
 }
 
 module.exports = verifyToken;

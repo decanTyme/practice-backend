@@ -11,8 +11,8 @@ router.get("/ping", authenticateToken, checkDbConnection, authCtrl.ping);
 // Authentication routes
 router.post("/signup", authCtrl.signup);
 router.post("/login", authCtrl.login);
-router.post("/signoff", authenticateToken, authCtrl.signoff);
-router.post("/authenticate", authenticateToken, authCtrl.authenticate);
+router.post("/signoff", authCtrl.signoff);
+router.post("/authenticate", authCtrl.authenticate);
 
 router.post("/user", authenticateToken, authCtrl.user);
 

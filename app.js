@@ -1,36 +1,47 @@
 // Imports
 const express = require("express");
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
+
+// Load Environment Variables
+require("dotenv").config();
+
+// Express Instance
 const app = express();
 
-// Parsers
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// CORS Headers
+app.use(
+  cors({
+    origin: "https://bodytalks-ph.herokuapp.com",
+    allowedHeaders: [
+      "Origin",
+      "Content",
+      "Accept",
+      "Content-Type",
+      "Credentials",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    credentials: true,
+  })
+);
 
 // Routes
 const authRoutes = require("./routes/auth");
 const itemRoutes = require("./routes/items");
 
-// Necessary CORS headers
+// Custom Headers
 app.use((req, res, next) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://bodytalks-ph.herokuapp.com"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Origin, Content, Accept, Content-Type, Credentials"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-  );
-  res.setHeader("Access-Control-Allow-Credentials", true);
   res.setHeader("Vary", "Origin");
   res.setHeader("Cache-Control", "no-cache, must-revalidate");
   next();
 });
 
-// Routes integration
+// Routes Integration
 app.use("/api", authRoutes);
 app.use("/api", itemRoutes);
 
