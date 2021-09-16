@@ -78,24 +78,28 @@ exports.login = (req, res, next) => {
 
       /* If the user wants a longer signin, sign a new refresh token */
       const refToken = generateAccessToken(user._id, "REFRESH_TOKEN");
-      const newRefToken = new RefreshToken({ token: refToken });
+      const newRefToken = new RefreshToken({
+        token: refToken,
+        rememberUser: longerSignin,
+      });
 
       /* Save valid refresh token to database */
       newRefToken
         .save()
-        .then(() => console.log("Refresh token added to DB."))
+        .then(() => {
+          console.log("Refresh token added to DB.");
+          return res.status(200).json({
+            userId: user._id,
+            refToken,
+            userData,
+          });
+        })
         .catch(() => {
           return res.status(500).json({
             message:
               "There was an authentication error. Please try again later.",
           });
         });
-
-      return res.status(200).json({
-        userId: user._id,
-        refToken,
-        userData,
-      });
     });
   });
 };

@@ -54,7 +54,7 @@ exports.addProduct = (req, res, next) => {
 
 exports.updateProduct = (req, res, next) => {
   const newProduct = new Product({
-    _id: req.body.id,
+    _id: req.body._id,
     name: req.body.name,
     code: req.body.code,
     brand: req.body.brand,
@@ -66,11 +66,25 @@ exports.updateProduct = (req, res, next) => {
     salePrice: req.body.salePrice,
   });
 
-  Product.updateOne({ _id: req.body.id }, newProduct)
-    .then(() => {
-      res
-        .status(201)
-        .json({ success: true, message: "Product updated successfully." });
+  Product.updateOne({ _id: req.body._id }, newProduct)
+    .then((updatedProduct) => {
+      if (updatedProduct.n === 0)
+        return res.status(400).json({
+          success: false,
+          message: `There was product with id: ${req.body._id}`,
+        });
+
+      if (updatedProduct.nModified === 0)
+        return res.status(400).json({
+          success: false,
+          message: "No products were modified.",
+        });
+
+      res.status(201).json({
+        success: true,
+        message: "Product updated successfully.",
+        product: updatedProduct,
+      });
     })
     .catch((error) => {
       res.status(400).json({
@@ -82,28 +96,24 @@ exports.updateProduct = (req, res, next) => {
 
 exports.deleteProduct = (req, res, next) => {
   if (req.query.item_ === KW_PRODUCT) {
-    Product.findById(req.query._id)
-      .then((product) => {
-        if (!product) throw `No product of id ${req.query._id} found.`;
-        Product.deleteOne({ _id: req.query._id })
-          .then((deletedProduct) => {
-            res.status(200).json({
-              deletedItem: deletedProduct,
-              success: true,
-              message: "Successfully deleted the item.",
-            });
-          })
-          .catch((error) => {
-            res.status(500).json({
-              error: error,
-              message: "There was an error in deleting the product.",
-            });
+    Product.deleteOne({ _id: req.query._id })
+      .then((deletedProduct) => {
+        if (deletedProduct.n === 0)
+          return res.status(400).json({
+            success: false,
+            message: `There was product with id: ${req.query._id}`,
           });
+
+        res.status(200).json({
+          deletedItem: deletedProduct,
+          success: true,
+          message: "Successfully deleted the item.",
+        });
       })
       .catch((error) => {
         res.status(500).json({
           error: error,
-          message: error.message,
+          message: "There was an error in deleting the product.",
         });
       });
   } else if (req.query.item_ === KW_EVENT) {

@@ -1,14 +1,4 @@
 const jwt = require("jsonwebtoken");
-const cookie = require("cookie");
-
-const nullCookie = cookie.serialize("__auth_token", null, {
-  maxAge: 0,
-  expires: new Date("Thu, 01 Jan 1970 00:00:00 GMT"),
-  path: "/",
-  secure: true,
-  httpOnly: true,
-  sameSite: "none",
-});
 
 function verifyToken(req, res, next) {
   try {
@@ -21,10 +11,6 @@ function verifyToken(req, res, next) {
     /* If there is a token, verify */
     jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
       if (err) {
-        if (req.path === "/authenticate") {
-          res.setHeader("Set-Cookie", nullCookie);
-        }
-
         return res.status(403).send({
           hasToken: true,
           auth: false,
