@@ -148,6 +148,28 @@ exports.authenticate = (req, res, next) => {
               message: "Invalid session.",
             });
 
+          if (!token.rememberUser)
+            return RefreshToken.deleteOne({ token: req.body.refToken }).then(
+              () => {
+                res
+                  .setHeader(
+                    "Set-Cookie",
+                    cookie.serialize("__auth_token", null, {
+                      maxAge: 0,
+                      path: "/",
+                      secure: true,
+                      httpOnly: true,
+                      sameSite: "none",
+                    })
+                  )
+                  .status(403)
+                  .json({
+                    auth: false,
+                    message: "Session expired. Please login again.",
+                  });
+              }
+            );
+
           res
             .setHeader(
               "Set-Cookie",
