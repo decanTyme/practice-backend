@@ -96,7 +96,7 @@ exports.updateProduct = (req, res, next) => {
 
 exports.deleteProduct = (req, res, next) => {
   if (req.query.item_ === KW_PRODUCT) {
-    Product.deleteOne({ _id: req.query._id })
+    Product.deleteOne({ _id: req.body._id })
       .then((deletedProduct) => {
         if (deletedProduct.n === 0)
           return res.status(400).json({

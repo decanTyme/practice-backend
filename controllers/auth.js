@@ -51,7 +51,7 @@ exports.login = (req, res, next) => {
 
   /* Try to find user in database */
   User.findOne({ username: client.username }).then((user) => {
-    if (!user) return res.status(401).json({ error: "Invalid credentials" });
+    if (!user) return res.status(401).json({ error: "Invalid Credentials" });
 
     /* Get the user data to send back to user */
     const userData = {
@@ -62,7 +62,7 @@ exports.login = (req, res, next) => {
 
     /* Validate the password */
     bcrypt.compare(client.password, user.password).then((valid) => {
-      if (!valid) return res.status(401).json({ error: "Invalid credentials" });
+      if (!valid) return res.status(401).json({ error: "Invalid Credentials" });
 
       /* Sign a new access token, serialize to cookie, and set to cookie header */
       res.setHeader(
@@ -170,6 +170,7 @@ exports.authenticate = (req, res, next) => {
               }
             );
 
+          console.log("Token refreshed.");
           res
             .setHeader(
               "Set-Cookie",
