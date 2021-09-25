@@ -11,7 +11,7 @@ function verifyToken(req, res, next) {
     /* If there is a token, verify */
     jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
       if (err) {
-        return res.status(403).send({
+        return res.status(302).send({
           hasToken: true,
           auth: false,
           message: "Session expired. Please login again.",
@@ -23,10 +23,9 @@ function verifyToken(req, res, next) {
           .status(401)
           .send({ hasToken: true, auth: false, message: "Invalid session." });
         throw "EINVSESS";
-      } else {
-        req.authDecoded = decoded;
-        next();
       }
+
+      next();
     });
   } catch (error) {
     res.status(418).json({

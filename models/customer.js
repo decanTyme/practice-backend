@@ -1,14 +1,15 @@
-let mongoose = require('mongoose');
-let Schema = mongoose.Schema;
-let ObjectId = mongoose.Types.ObjectId;
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-let customer = new Schema({
-  name: String,
-  contact: String,
-  dateOfTransaction: Date,
-  productCode: [{type: ObjectId, ref: 'Product'}],
-  quantity: Number,
-  totalProcured: Number,
-});
+const CustomerSchema = new Schema(
+  {
+    type: { type: String, required: true },
+    name: { type: String, required: true },
+    contact: { type: String, required: true },
+    address: String,
+    debt: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
 
-module.exports = mongoose.model('Customer', customer);
+module.exports = mongoose.model("Customer", CustomerSchema);

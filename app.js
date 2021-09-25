@@ -33,6 +33,7 @@ app.use(
 // Routes
 const authRoutes = require("./routes/auth");
 const itemRoutes = require("./routes/items");
+const customerRoutes = require("./routes/customers");
 
 // Custom Headers
 app.use((req, res, next) => {
@@ -42,7 +43,8 @@ app.use((req, res, next) => {
 });
 
 // Routes Integration
-app.use("/api", authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api", itemRoutes);
+app.use("/api/customers", customerRoutes);
 
 module.exports = app;

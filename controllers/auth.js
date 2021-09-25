@@ -6,7 +6,7 @@ const generateAccessToken = require("../services/generate-token");
 const User = require("../models/users");
 const RefreshToken = require("../models/refresh-token");
 
-exports.signup = (req, res, next) => {
+exports.signup = (req, res) => {
   bcrypt
     .hash(req.body.password, 12)
     .then((hash) => {
@@ -45,7 +45,7 @@ exports.signup = (req, res, next) => {
     });
 };
 
-exports.login = (req, res, next) => {
+exports.login = (req, res) => {
   const client = req.body;
   const longerSignin = JSON.parse(client.rememberUser);
 
@@ -77,34 +77,42 @@ exports.login = (req, res, next) => {
       );
 
       /* If the user wants a longer signin, sign a new refresh token */
-      const refToken = generateAccessToken(user._id, "REFRESH_TOKEN");
-      const newRefToken = new RefreshToken({
-        token: refToken,
-        rememberUser: longerSignin,
-      });
-
-      /* Save valid refresh token to database */
-      newRefToken
-        .save()
-        .then(() => {
-          console.log("Refresh token added to DB.");
-          return res.status(200).json({
-            userId: user._id,
-            refToken,
-            userData,
-          });
-        })
-        .catch(() => {
-          return res.status(500).json({
-            message:
-              "There was an authentication error. Please try again later.",
-          });
+      if (longerSignin) {
+        const refToken = generateAccessToken(user._id, "REFRESH_TOKEN");
+        const newRefToken = new RefreshToken({
+          token: refToken,
+          rememberUser: longerSignin,
         });
+
+        /* Save valid refresh token to database */
+        newRefToken
+          .save()
+          .then(() => {
+            console.log("Refresh token added to DB.");
+            return res.status(200).json({
+              userId: user._id,
+              refToken,
+              userData,
+            });
+          })
+          .catch(() => {
+            return res.status(500).json({
+              message:
+                "There was an authentication error. Please try again later.",
+            });
+          });
+      } else {
+        res.status(200).json({
+          userId: user._id,
+          userData,
+        });
+      }
     });
   });
 };
 
-exports.signoff = (req, res, next) => {
+exports.signoff = (req, res) => {
+  console.log(req.path, "| Token:", req.body.refToken);
   RefreshToken.deleteOne({ token: req.body.refToken })
     .then(() => {
       console.log("Successfully invalidated the refresh token.");
@@ -123,14 +131,32 @@ exports.signoff = (req, res, next) => {
         .json({ signoff: true });
     })
     .catch((error) => {
-      // console.log(error);
+      console.log(error);
       return res.status(500).json({ signoff: true });
     });
 };
 
-exports.authenticate = (req, res, next) => {
-  if (req.body.refToken === "" || req.body.userId === "")
+exports.authenticate = (req, res) => {
+  if (!req.body.userId)
     return res.status(401).json({ auth: false, message: "Please log in." });
+
+  if (!req.body.refToken)
+    return res
+      .setHeader(
+        "Set-Cookie",
+        cookie.serialize("__auth_token", null, {
+          maxAge: 0,
+          path: "/",
+          secure: true,
+          httpOnly: true,
+          sameSite: "none",
+        })
+      )
+      .status(403)
+      .json({
+        auth: false,
+        message: "Session expired. Please login again.",
+      });
 
   User.findOne({ _id: req.body.userId })
     .then((user) => {
@@ -151,6 +177,8 @@ exports.authenticate = (req, res, next) => {
           if (!token.rememberUser)
             return RefreshToken.deleteOne({ token: req.body.refToken }).then(
               () => {
+                console.log("Refresh token invalidated.");
+
                 res
                   .setHeader(
                     "Set-Cookie",
@@ -194,16 +222,17 @@ exports.authenticate = (req, res, next) => {
     });
 };
 
-exports.ping = (req, res, next) => {
+exports.ping = (req, res) => {
   if (!req.isDbConnected)
-    return res
-      .status(500)
-      .json({ error: req.dbErr, message: "Database connect error" });
+    return res.status(500).json({
+      error: req.databaseConnectError,
+      message: "Database connect error",
+    });
 
   return res.json({ auth: true });
 };
 
-exports.user = (req, res, next) => {
+exports.user = (req, res) => {
   User.findOne({ _id: req.body.userId })
     .then((user) => {
       res.status(200).json({

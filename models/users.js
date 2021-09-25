@@ -9,7 +9,7 @@ let userSchema = new Schema({
   firstname: { type: String, required: true },
   lastname: { type: String, required: true },
   role: { type: String, required: true },
-  profileImgUrl: { type: String },
+  profileImgURL: { type: String },
 });
 
 userSchema.plugin(uniqValidator);

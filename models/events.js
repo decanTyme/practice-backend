@@ -1,10 +1,10 @@
-let mongoose = require('mongoose');
+let mongoose = require("mongoose");
 let Schema = mongoose.Schema;
 
-let dsc_event = new Schema({
+let event = new Schema({
   name: String,
   date: String,
-  venue: String
+  venue: String,
 });
 
-module.exports = mongoose.model('Event', dsc_event);
+module.exports = mongoose.model("Event", event);
