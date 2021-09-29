@@ -35,44 +35,34 @@ exports.add = async (req, res) => {
     case ITEM_PRODUCT:
       // In case the API user says the data is an array
       if (params.isArray) {
-        const data = req.body;
         const responses = [];
 
         try {
-          for await (const item of data) {
+          for await (const item of req.body) {
             // const alreadySavedProduct = Product.findOne({
             //   name: item.name,
             //   brand: item.brand,
             // });
             // console.log(alreadySavedProduct, data);
 
-            if (true) {
-              const savedProduct = await new Product({
-                code: item.code,
-                brand: item.brand,
-                name: item.name,
-                class: item.class,
-                category: item.category,
-                price: item.price,
-                stock: {
-                  inbound: item.stock.inbound,
-                  warehouse: item.stock.warehouse,
-                  shipped: item.stock.shipped,
-                },
-              }).save();
+            if (req.access) {
+              const savedProduct = await new Product(item).save();
 
-              responses.push({ product: savedProduct });
+              responses.push(savedProduct);
+            } else {
+              return res.status(403).json({
+                success: false,
+                message: "Sorry, you don't have enough priviliges to do that.",
+              });
             }
-
-            // responses.push(item);
           }
 
+          console.log(responses);
           res.status(201).json({
             products: responses,
-            success: true,
           });
         } catch (error) {
-          console.log(error);
+          console.log("Error", error);
           res.status(500).json({
             error: error,
             message: "There was an error in saving the product.",
@@ -95,7 +85,6 @@ exports.add = async (req, res) => {
           res.status(201).json({
             product: "savedProduct",
             stock: "productStock",
-            success: true,
           });
         } catch (error) {
           console.log(error);
