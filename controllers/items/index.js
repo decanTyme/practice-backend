@@ -156,11 +156,7 @@ exports.updateProduct = async (req, res) => {
   const { access, body } = req;
 
   const newProduct = body;
-  const newStock = newProduct.stock;
-  delete newProduct.stock;
-
   const productId = newProduct._id;
-  const stockId = newStock._id;
 
   try {
     if (access) {
@@ -175,25 +171,11 @@ exports.updateProduct = async (req, res) => {
         (err, updatedProduct) => {
           if (err) throw Error(err);
 
-          Stock.findByIdAndUpdate(
-            stockId,
-            newStock,
-            {
-              new: true,
-              runValidators: true,
-              upsert: true,
-            },
-            (err, updatedStock) => {
-              if (err) throw Error(err);
-
-              res.status(201).json({
-                success: true,
-                message: "Product updated successfully.",
-                product: updatedProduct,
-                stock: updatedStock,
-              });
-            }
-          );
+          res.status(201).json({
+            success: true,
+            message: "Product updated successfully.",
+            product: updatedProduct,
+          });
         }
       );
     }
