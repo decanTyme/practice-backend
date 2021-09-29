@@ -1,13 +1,11 @@
 const mongoose = require("mongoose");
 
 // Mongoose model imports
-const Product = require("../../models/product/product");
+const Product = require("../../models/product");
 const Event = require("../../models/events");
-const Stock = require("../../models/product/stock");
 const Order = require("../../models/order");
 
 const ITEM_PRODUCT = "product";
-const ITEM_STOCK = "stock";
 const ITEM_CUSTOMER = "customer";
 const ITEM_ORDER = "order";
 
@@ -15,14 +13,13 @@ exports.load = (req, res) => {
   const queries = req.query;
 
   if (queries.populated) {
-    Stock.find()
-      .populate("product")
+    Product.find()
       .then((products) => {
         res.json(products);
       })
       .catch((error) => {});
   } else {
-    Stock.find()
+    Product.find()
       .then((products) => {
         res.json(products);
       })
@@ -43,8 +40,6 @@ exports.add = async (req, res) => {
 
         try {
           for await (const item of data) {
-            const productId = new mongoose.Types.ObjectId();
-
             // const alreadySavedProduct = Product.findOne({
             //   name: item.name,
             //   brand: item.brand,
@@ -53,26 +48,20 @@ exports.add = async (req, res) => {
 
             if (true) {
               const savedProduct = await new Product({
-                _id: productId,
                 code: item.code,
                 brand: item.brand,
                 name: item.name,
                 class: item.class,
                 category: item.category,
                 price: item.price,
-              }).save();
-
-              const productStock = await new Stock({
-                product: productId,
-                quantity: {
-                  inbound: item.stock.quantity.inbound,
-                  warehouse: item.stock.quantity.warehouse,
-                  shipped: item.stock.quantity.shipped,
+                stock: {
+                  inbound: item.stock.inbound,
+                  warehouse: item.stock.warehouse,
+                  shipped: item.stock.shipped,
                 },
-                unit: item.stock.unit,
               }).save();
 
-              responses.push({ product: savedProduct, stock: productStock });
+              responses.push({ product: savedProduct });
             }
 
             // responses.push(item);
@@ -92,7 +81,6 @@ exports.add = async (req, res) => {
       } else {
         try {
           console.log(req.body);
-          const productId = new mongoose.Types.ObjectId();
 
           // const savedProduct = await new Product({
           //   _id: productId,
@@ -102,12 +90,6 @@ exports.add = async (req, res) => {
           //   class: req.body.class,
           //   category: req.body.category,
           //   price: req.body.price,
-          // }).save();
-
-          // const productStock = await new Stock({
-          //   product: productId,
-          //   quantity: req.body.stock.quantity,
-          //   unit: req.body.stock.unit,
           // }).save();
 
           res.status(201).json({
@@ -171,7 +153,9 @@ exports.add = async (req, res) => {
 };
 
 exports.updateProduct = async (req, res) => {
-  const newProduct = req.body;
+  const { access, body } = req;
+
+  const newProduct = body;
   const newStock = newProduct.stock;
   delete newProduct.stock;
 
@@ -179,46 +163,48 @@ exports.updateProduct = async (req, res) => {
   const stockId = newStock._id;
 
   try {
-    // Product.findByIdAndUpdate(
-    //   productId,
-    //   newProduct,
-    //   {
-    //     new: true,
-    //     runValidators: true,
-    //     upsert: true,
-    //   },
-    //   (err, updatedProduct) => {
-    //     if (err) throw Error(err);
+    if (access) {
+      return Product.findByIdAndUpdate(
+        productId,
+        newProduct,
+        {
+          new: true,
+          runValidators: true,
+          upsert: true,
+        },
+        (err, updatedProduct) => {
+          if (err) throw Error(err);
 
-    //     Stock.findByIdAndUpdate(
-    //       stockId,
-    //       newStock,
-    //       {
-    //         new: true,
-    //         runValidators: true,
-    //         upsert: true,
-    //       },
-    //       (err, updatedStock) => {
-    //         if (err) throw Error(err);
+          Stock.findByIdAndUpdate(
+            stockId,
+            newStock,
+            {
+              new: true,
+              runValidators: true,
+              upsert: true,
+            },
+            (err, updatedStock) => {
+              if (err) throw Error(err);
 
-    //         res.status(201).json({
-    //           success: true,
-    //           message: "Product updated successfully.",
-    //           product: updatedProduct,
-    //           stock: updatedStock,
-    //         });
-    //       }
-    //     );
-    //   }
-    // );
+              res.status(201).json({
+                success: true,
+                message: "Product updated successfully.",
+                product: updatedProduct,
+                stock: updatedStock,
+              });
+            }
+          );
+        }
+      );
+    }
 
-    res.status(201).json({
-      success: true,
-      message: "Product updated successfully.",
+    return res.status(403).json({
+      success: false,
+      message: "Sorry, you don't have enough priviliges to do that.",
     });
   } catch (error) {
     console.log(error);
-    res.status(400).json({
+    return res.status(400).json({
       error,
       message: "There was an error in updating the product.",
     });

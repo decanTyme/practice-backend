@@ -9,8 +9,19 @@ const ProductSchema = new Schema(
     brand: { type: String, required: true },
     class: { type: String, required: true },
     category: { type: String, required: true },
-    price: { type: Number, required: true },
+    prices: [
+      {
+        label: { type: String, required: true },
+        value: { type: Number, required: true },
+      },
+    ],
     imgURL: { type: String },
+    stock: {
+      inbound: { type: Number, required: true },
+      warehouse: { type: Number, required: true },
+      shipped: { type: Number, required: true },
+    },
+    unit: { type: String, required: true },
   },
   { timestamps: true }
 );

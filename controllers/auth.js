@@ -60,6 +60,8 @@ exports.login = (req, res) => {
       role: user.role,
     };
 
+    const access = user.role.toLowerCase() === "administrator";
+
     /* Validate the password */
     bcrypt.compare(client.password, user.password).then((valid) => {
       if (!valid) return res.status(401).json({ error: "Invalid Credentials" });
@@ -67,18 +69,25 @@ exports.login = (req, res) => {
       /* Sign a new access token, serialize to cookie, and set to cookie header */
       res.setHeader(
         "Set-Cookie",
-        cookie.serialize("__auth_token", generateAccessToken(user._id), {
-          maxAge: 1200,
-          path: "/",
-          secure: true,
-          httpOnly: true,
-          sameSite: "none",
-        })
+        cookie.serialize(
+          "__auth_token",
+          generateAccessToken({ ...userData, id: user._id }),
+          {
+            maxAge: 1200,
+            path: "/",
+            secure: true,
+            httpOnly: true,
+            sameSite: "none",
+          }
+        )
       );
 
       /* If the user wants a longer signin, sign a new refresh token */
       if (longerSignin) {
-        const refToken = generateAccessToken(user._id, "REFRESH_TOKEN");
+        const refToken = generateAccessToken(
+          { ...userData, id: user._id },
+          "REFRESH_TOKEN"
+        );
         const newRefToken = new RefreshToken({
           token: refToken,
           rememberUser: longerSignin,
@@ -91,6 +100,7 @@ exports.login = (req, res) => {
             console.log("Refresh token added to DB.");
             return res.status(200).json({
               userId: user._id,
+              adminAccess: access,
               refToken,
               userData,
             });
@@ -105,6 +115,7 @@ exports.login = (req, res) => {
         res.status(200).json({
           userId: user._id,
           userData,
+          adminAccess: access,
         });
       }
     });
@@ -165,6 +176,12 @@ exports.authenticate = (req, res) => {
           .status(403)
           .json({ auth: false, message: "Invalid session." });
 
+      const userData = {
+        firstname: user.firstname,
+        lastname: user.lastname,
+        role: user.role,
+      };
+
       RefreshToken.findOne({ token: req.body.refToken })
         .then((token) => {
           if (!token)
@@ -202,13 +219,17 @@ exports.authenticate = (req, res) => {
           res
             .setHeader(
               "Set-Cookie",
-              cookie.serialize("__auth_token", generateAccessToken(user._id), {
-                maxAge: 1200,
-                path: "/",
-                secure: true,
-                httpOnly: true,
-                sameSite: "none",
-              })
+              cookie.serialize(
+                "__auth_token",
+                generateAccessToken({ ...userData, id: user._id }),
+                {
+                  maxAge: 1200,
+                  path: "/",
+                  secure: true,
+                  httpOnly: true,
+                  sameSite: "none",
+                }
+              )
             )
             .status(200)
             .json({ auth: true });
