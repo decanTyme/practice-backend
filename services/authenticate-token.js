@@ -11,13 +11,16 @@ function verifyToken(req, res, next) {
     /* If there is a token, verify */
     const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
 
-    // if (req.body.userId && req.body.userId !== decoded.user.id) {
-    //   return res
-    //     .status(401)
-    //     .json({ hasToken: true, auth: false, message: "Invalid session." });
-    // }
+    const access = decoded.user.role.toLowerCase() === "administrator";
 
-    req.access = decoded.user.role.toLowerCase() === "administrator";
+    // Check if the user has authority
+    if (!access)
+      return res.status(403).json({
+        success: false,
+        message: "Sorry, you don't have enough priviliges to do that.",
+      });
+
+    req.user = decoded.user;
 
     next();
   } catch (error) {

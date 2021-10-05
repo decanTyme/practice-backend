@@ -1,12 +1,12 @@
 const express = require("express");
 const productRoutes = require("./products");
-const authenticateToken = require("../../services/authenticate-token");
+const stockRoutes = require("./stocks");
 
 const router = express.Router();
 
 // Item management routes
 router.use("/products", productRoutes);
-// router.use("/orders");
+router.use("/stocks", stockRoutes);
 // router.use("/modify");
 // router.use("/del");
 

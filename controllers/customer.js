@@ -17,9 +17,18 @@ exports.load = async (req, res) => {
   const body = req.body;
 
   try {
+    if (queries.populate) {
+      const customers = await Customer.find().populate("addedBy", {
+        username: 0,
+        password: 0,
+      });
+
+      return res.status(200).json(customers);
+    }
+
     const customers = await Customer.find();
 
-    res.status(200).json(customers);
+    return res.status(200).json(customers);
   } catch (error) {
     res.status(500).json({
       error: error,
@@ -29,10 +38,27 @@ exports.load = async (req, res) => {
 };
 
 exports.add = async (req, res) => {
-  const queries = req.query;
-  const body = req.body;
+  const {
+    user: { id: adminId },
+    query: queries,
+    body: data,
+  } = req;
 
-  const customer = new Customer(body);
+  const isExist = await Customer.exists({
+    firstname: data.firstname,
+    lastname: data.lastname,
+  });
+
+  if (isExist)
+    return res.status(200).json({
+      message: `Customer "${data.firstname} ${data.lastname}" already exists.`,
+      success: false,
+    });
+
+  const customer = new Customer({
+    ...data,
+    addedBy: adminId,
+  });
 
   try {
     await customer.save();

@@ -4,8 +4,13 @@ const ObjectId = mongoose.Types.ObjectId;
 
 const OrderSchema = new Schema(
   {
-    type: { type: String, required: true },
-    products: [{ type: ObjectId, ref: "Product", required: true }],
+    _type: { type: String, required: true },
+    products: [
+      {
+        item: { type: ObjectId, ref: "Product", required: true },
+        quantity: { type: String, required: true },
+      },
+    ],
     customer: { type: ObjectId, ref: "Customer" },
   },
   { timestamps: true }

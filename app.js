@@ -2,6 +2,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const boolParser = require("express-query-boolean");
 
 // Load Environment Variables
 require("dotenv").config();
@@ -13,6 +14,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(boolParser());
 
 // CORS Headers
 app.use(

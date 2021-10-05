@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 // Mongoose connect
 const uri =
-  "mongodb+srv://JlearnUse:CnTPBgg2jSAGJlgm@learningcluster0.p98nk.mongodb.net/btph?retryWrites=true&w=majority";
+  "mongodb+srv://btph-api_2:FNMb7ldLMvk5hgWQ@learningcluster0.p98nk.mongodb.net/btph?retryWrites=true&w=majority";
 const mOpts = {
   useNewUrlParser: true,
   useFindAndModify: false,
