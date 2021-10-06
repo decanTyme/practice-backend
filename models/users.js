@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
-const uniqueValidator = require("mongoose-unique-validator");
-
 const Schema = mongoose.Schema;
+const ObjectId = mongoose.Types.ObjectId;
+const uniqueValidator = require("mongoose-unique-validator");
 
 const UserSchema = new Schema({
   username: { type: String, required: true, unique: true },
@@ -11,6 +11,7 @@ const UserSchema = new Schema({
   role: { type: String, required: true },
   bio: { type: String },
   profileImgURL: { type: String },
+  business: { type: ObjectId, ref: "Business" },
 });
 
 UserSchema.plugin(uniqueValidator);

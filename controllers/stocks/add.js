@@ -19,7 +19,7 @@ const addStocks = async (req, res) => {
     const variant = await Variant.findOne({ _id: queries._id });
 
     if (!variant)
-      return res.status(200).json({
+      return res.status(404).json({
         message: `Variant with ID "${queries._id}" does not exist.`,
         success: false,
       });

@@ -1,11 +1,12 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Types.ObjectId;
+const uniqueValidator = require("mongoose-unique-validator");
 
 const StockSchema = new Schema(
   {
     variant: { type: ObjectId, ref: "Variant", required: true },
-    batch: { type: String, required: true },
+    batch: { type: String, required: true, unique: true },
     _type: {
       type: String,
       enum: ["inbound", "warehouse", "shipped", "sold"],
@@ -31,8 +32,26 @@ const StockSchema = new Schema(
     },
     owner: { type: ObjectId, ref: "Customer" },
     addedBy: { type: ObjectId, ref: "User", required: true },
+    updatedBy: [
+      {
+        user: { type: ObjectId, ref: "User" },
+        timestamp: { type: Date, default: new Date().toISOString() },
+      },
+    ],
+    deletedBy: [
+      {
+        user: { type: ObjectId, ref: "User" },
+        timestamp: { type: Date, default: new Date().toISOString() },
+      },
+    ],
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    strict: true,
+    useNestedStrict: true,
+  }
 );
+
+StockSchema.plugin(uniqueValidator);
 
 module.exports = mongoose.model("Stock", StockSchema);

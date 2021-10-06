@@ -1,44 +1,67 @@
 const Product = require("../../models/product");
+const Variant = require("../../models/variant");
 const Stock = require("../../models/stock");
 
 const removeProducts = async (req, res) => {
-  console.log(req.query);
-  if (req.query._item === ITEM_PRODUCT) {
-    Product.deleteOne({ _id: req.body._id })
-      .then((deletedProduct) => {
-        if (deletedProduct.n === 0)
-          return res.status(400).json({
-            success: false,
-            message: `There was product with id: ${req.body._id}`,
-          });
+  const {
+    user: { id: adminId },
+    query: queries,
+  } = req;
 
-        res.status(200).json({
-          deletedItem: deletedProduct,
-          success: true,
-          message: "Successfully deleted the item.",
-        });
-      })
-      .catch((error) => {
-        res.status(500).json({
-          error: error,
-          message: "There was an error in deleting the product.",
-        });
+  try {
+    if (!queries._id)
+      return res.status(400).json({
+        success: false,
+        message: "No product id was given.",
       });
-  } else if (req.query.item_ === ITEM_CUSTOMER) {
-    Event.deleteOne({ _id: req.query._id })
-      .then((deletedEvent) => {
-        res.status(200).json({
-          deletedItem: deletedEvent,
-          success: true,
-          message: "Successfully deleted the event.",
-        });
-      })
-      .catch((error) => {
-        res.status(500).json({
-          error: error,
-          message: "There was an error in deleting the event.",
-        });
+
+    const isExist = await Product.exists({ _id: queries._id });
+
+    if (!isExist)
+      return res.status(404).json({
+        message: `Product with ID "${queries._id}" does not exist.`,
+        success: false,
       });
+
+    const variants = await Variant.find({ product: queries._id });
+
+    let deletedStockCount = 0;
+    for (const variant of variants) {
+      deletedStockCount += (await Stock.deleteMany({ variant: variant._id }))
+        .deletedCount;
+    }
+
+    const deletedVariants = await Variant.deleteMany({ product: queries._id });
+    const deletedProduct = await Product.findByIdAndDelete(queries._id);
+
+    return res.status(201).json({
+      deleted: deletedProduct,
+      deleteCounts: {
+        variant: deletedVariants.deletedCount,
+        stocks: deletedStockCount,
+      },
+      success: true,
+      message: "Successfully removed the product.",
+    });
+  } catch (error) {
+    console.log("Error", error);
+
+    if (error instanceof TypeError)
+      return res.status(500).json({
+        error: JSON.stringify(error),
+        message: "There was an error in saving the product.",
+      });
+
+    // if (error instanceof CastError)
+    //   return res.status(500).json({
+    //     error: `${error.name}: ${error.message}`,
+    //     message: "There was an error in adding the stock to the product.",
+    //   });
+
+    return res.status(500).json({
+      error: JSON.stringify(error),
+      message: "There was an error in saving the product.",
+    });
   }
 };
 

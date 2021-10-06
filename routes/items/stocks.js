@@ -7,7 +7,7 @@ const router = express.Router();
 // Item management routes
 router.get("/", authenticateToken, load);
 router.post("/add", authenticateToken, add);
-// router.patch("/modify", authenticateToken, stockCtrl.modifyProduct);
-// router.delete("/del", authenticateToken, stockCtrl.deleteProduct);
+router.patch("/modify", authenticateToken, modify);
+// router.delete("/del", authenticateToken, deleteProduct);
 
 module.exports = router;

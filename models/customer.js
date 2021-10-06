@@ -19,6 +19,7 @@ const CustomerSchema = new Schema(
     bio: { type: String, default: "Insert customer information here..." },
     debt: { type: Number, default: 0 },
     addedBy: { type: ObjectId, ref: "User", required: true },
+    updatedBy: [{ type: ObjectId, ref: "User" }],
   },
   { timestamps: true }
 );

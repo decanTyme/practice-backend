@@ -41,11 +41,28 @@ const addProducts = async (req, res) => {
           continue;
         }
 
+        if (!item.variants || item.variants.length === 0)
+          return res.status(404).json({
+            message: `Please provide at least one product variant.`,
+            success: false,
+          });
+
         const savedProduct = await new Product({
           ...item,
           addedBy: adminId,
         }).save();
 
+        const savedVariants = [];
+        for (const variant of item.variants) {
+          const savedVariant = await new Variant({
+            ...variant,
+            product: savedProduct._id,
+            addedBy: adminId,
+          }).save();
+          savedVariants.push(savedVariant);
+        }
+
+        savedProduct.variants = savedVariants;
         savedProducts.push(savedProduct);
       }
 
@@ -69,47 +86,6 @@ const addProducts = async (req, res) => {
         saved: savedProducts,
         success: true,
         message: "Successfully added the products.",
-      });
-    }
-
-    // Add variant only
-    if (queries.variant) {
-      if (!queries._id)
-        return res.status(400).json({
-          success: false,
-          message: "No product id was given.",
-        });
-
-      const product = await Product.findOne({ _id: queries._id });
-
-      if (!product)
-        return res.status(200).json({
-          message: `Product with ID "${queries._id}" does not exist.`,
-          success: false,
-        });
-
-      const isExist = await Variant.exists({
-        product: queries._id,
-        name: data.name,
-      });
-
-      if (isExist)
-        return res.status(200).json({
-          message: `Variant "${data.name}" already exists on product "${product.brand} ${product.name}".`,
-          success: false,
-        });
-
-      const savedVariant = await new Variant({
-        ...data,
-        product: queries._id,
-        addedBy: adminId,
-      }).save();
-
-      // console.log(data, savedProduct);
-
-      return res.status(201).json({
-        variant: savedVariant,
-        success: true,
       });
     }
 

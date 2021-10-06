@@ -17,14 +17,13 @@ const loadProducts = async (req, res) => {
           path: "variants",
           populate: {
             path: "stocks",
-            populate: { path: "addedBy" },
+            populate: { path: "addedBy", select: populatedAddedByFilter },
           },
         })
         .populate({
           path: "variants",
-          populate: { path: "addedBy" },
-        })
-        .populate("addedBy", populatedAddedByFilter);
+          populate: { path: "addedBy", select: populatedAddedByFilter },
+        });
 
       return res.status(200).json(products);
     }

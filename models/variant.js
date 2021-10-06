@@ -49,6 +49,8 @@ const VariantSchema = new Schema(
     ],
     prices: [PriceSchema],
     addedBy: { type: ObjectId, ref: "User", required: true },
+    updatedBy: [{ type: ObjectId, ref: "User" }],
+    deletedBy: [{ type: ObjectId, ref: "User" }],
   },
   {
     timestamps: true,
