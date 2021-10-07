@@ -4,17 +4,17 @@ const ObjectId = mongoose.Types.ObjectId;
 
 const CourierSchema = new Schema(
   {
-    _type: { type: String, required: true },
     name: { type: String, required: true },
-    contact: [{ type: String, required: true }],
+    contacts: [{ type: String, required: true }],
     address: {
       street: String,
       purok: String,
       barangay: String,
+      city: String,
       province: String,
       postcode: Number,
     },
-    bio: { type: String, default: "Insert customer information here..." },
+    bio: { type: String, default: "Insert extra courier information here..." },
     addedBy: { type: ObjectId, ref: "User", required: true },
   },
   { timestamps: true }

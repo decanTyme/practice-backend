@@ -8,7 +8,6 @@ const populatedAddedByFilter = {
 const loadProducts = async (req, res) => {
   const { query: queries } = req;
 
-  console.log(queries);
   try {
     if (queries.populate !== "none") {
       const products = await Product.find()

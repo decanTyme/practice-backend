@@ -1,5 +1,4 @@
 const express = require("express");
-const authenticateToken = require("../../services/authenticate-token");
 const {
   load,
   add,
@@ -13,9 +12,9 @@ const router = express.Router();
 router.use("/variants", variantRoutes);
 
 // Item management routes
-router.get("/", authenticateToken, load);
-router.post("/add", authenticateToken, add);
-router.patch("/modify", authenticateToken, modifyProduct);
-router.delete("/del", authenticateToken, remove);
+router.get("/", load);
+router.post("/add", add);
+router.patch("/modify", modifyProduct);
+router.delete("/del", remove);
 
 module.exports = router;

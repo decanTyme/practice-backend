@@ -8,11 +8,12 @@ const CustomerSchema = new Schema(
     designation: { type: String, default: "N/A" },
     firstname: { type: String, required: true },
     lastname: { type: String, required: true },
-    contact: [{ type: String, required: true }],
+    contacts: [{ type: String, required: true }],
     address: {
       street: String,
       purok: String,
       barangay: String,
+      city: String,
       province: String,
       postcode: Number,
     },

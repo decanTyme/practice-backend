@@ -34,8 +34,8 @@ app.use(
 
 // Routes
 const authRoutes = require("./routes/auth");
-const itemRoutes = require("./routes/items");
-const customerRoutes = require("./routes/customers");
+const allProtectedRoutes = require("./routes");
+const authenticateToken = require("./services/authenticate-token");
 
 // Custom Headers
 app.use((req, res, next) => {
@@ -46,7 +46,6 @@ app.use((req, res, next) => {
 
 // Routes Integration
 app.use("/api/auth", authRoutes);
-app.use("/api", itemRoutes);
-app.use("/api/customers", customerRoutes);
+app.use("/api", authenticateToken, allProtectedRoutes);
 
 module.exports = app;

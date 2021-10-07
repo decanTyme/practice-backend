@@ -2,6 +2,11 @@ const Product = require("../../models/product");
 const Variant = require("../../models/variant");
 const Stock = require("../../models/stock");
 
+const populatedAddedByFilter = {
+  username: 0,
+  password: 0,
+};
+
 const addStocks = async (req, res) => {
   const {
     user: { id: adminId },
@@ -42,6 +47,11 @@ const addStocks = async (req, res) => {
       _type: queries.type,
       addedBy: adminId,
     }).save();
+
+    await savedStock.execPopulate("addedBy", populatedAddedByFilter);
+
+    if (!savedStock.populated("addedBy"))
+      throw new Error("Could not populate some paths.");
 
     return res.status(201).json({
       stock: savedStock,
