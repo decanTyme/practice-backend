@@ -24,6 +24,7 @@ const StockSchema = new Schema(
     manufacturedOn: { type: Date, required: true },
     expiry: { type: Date, required: true },
     courier: { type: ObjectId, ref: "Courier" },
+    eta: { type: Date },
     arrivedOn: {
       type: Date,
       required: function () {

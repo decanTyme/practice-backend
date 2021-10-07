@@ -1,10 +1,17 @@
 const Stock = require("../../models/stock");
 
+const populatedAddedByFilter = {
+  username: 0,
+  password: 0,
+};
+
 const loadStocks = async (req, res) => {
   const { queries, body } = req;
 
   try {
-    const stocks = await Stock.find();
+    const stocks = await Stock.find()
+      .populate("courier")
+      .populate("addedBy", populatedAddedByFilter);
 
     return res.status(200).json(stocks);
   } catch (error) {

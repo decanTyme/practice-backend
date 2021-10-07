@@ -18,7 +18,7 @@ const modifyStocks = async (req, res) => {
       if (!queries._id)
         return res.status(400).json({
           success: false,
-          message: "No stock id was given.",
+          message: "No stock ID was given.",
         });
 
       const stock = await Stock.findById(queries._id);
@@ -29,11 +29,11 @@ const modifyStocks = async (req, res) => {
           success: false,
         });
 
-      // if (stock.checked === queries.mark)
-      //   return res.status(200).json({
-      //     message: `Stock with ID "${queries._id}" is already marked as ${queries.mark}.`,
-      //     success: false,
-      //   });
+      if (stock.checked === queries.mark)
+        return res.status(200).json({
+          message: `Stock with ID "${queries._id}" is already marked as ${queries.mark}.`,
+          success: false,
+        });
 
       stock.checked = queries.mark;
       stock.updatedBy.push({ user: adminId });
@@ -45,7 +45,7 @@ const modifyStocks = async (req, res) => {
       if (!savedStock.populated("addedBy"))
         throw new Error("Could not populate some paths.");
 
-      return res.status(201).json({
+      return res.status(200).json({
         stock: savedStock,
         message: `Stock with the batch no. "${stock.batch}" successfully marked as ${queries.mark}.`,
         success: true,

@@ -51,7 +51,7 @@ exports.modifyProduct = async (req, res) => {
       (err, updatedProduct) => {
         if (err) throw Error(err);
 
-        res.status(201).json({
+        res.status(200).json({
           success: true,
           message: "Product updated successfully.",
           product: updatedProduct,

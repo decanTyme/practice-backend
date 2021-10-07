@@ -21,6 +21,13 @@ const loadProducts = async (req, res) => {
         })
         .populate({
           path: "variants",
+          populate: {
+            path: "stocks",
+            populate: { path: "courier" },
+          },
+        })
+        .populate({
+          path: "variants",
           populate: { path: "addedBy", select: populatedAddedByFilter },
         });
 

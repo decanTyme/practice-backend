@@ -34,7 +34,7 @@ const removeProducts = async (req, res) => {
     const deletedVariants = await Variant.deleteMany({ product: queries._id });
     const deletedProduct = await Product.findByIdAndDelete(queries._id);
 
-    return res.status(201).json({
+    return res.status(200).json({
       deleted: deletedProduct,
       deleteCounts: {
         variant: deletedVariants.deletedCount,

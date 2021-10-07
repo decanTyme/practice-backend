@@ -44,7 +44,7 @@ const addStocks = async (req, res) => {
     const savedStock = await new Stock({
       ...data,
       variant: queries._id,
-      _type: queries.type,
+      _type: queries._type,
       addedBy: adminId,
     }).save();
 
