@@ -12,7 +12,6 @@ const modifyStocks = async (req, res) => {
     body: data,
   } = req;
 
-  console.log(queries, data);
   try {
     if (queries.check) {
       if (!queries._id)
@@ -29,24 +28,25 @@ const modifyStocks = async (req, res) => {
           success: false,
         });
 
-      if (stock.checked === queries.mark)
-        return res.status(200).json({
-          message: `Stock with ID "${queries._id}" is already marked as ${queries.mark}.`,
-          success: false,
-        });
+      // if (stock.checked === queries.mark)
+      //   return res.status(200).json({
+      //     message: `Stock with ID "${queries._id}" is already marked as ${queries.mark}.`,
+      //     success: false,
+      //   });
 
       stock.checked = queries.mark;
       stock.updatedBy.push({ user: adminId });
 
-      const savedStock = await stock.save();
+      await stock.save();
 
-      await savedStock.execPopulate("addedBy", populatedAddedByFilter);
+      await stock.execPopulate("addedBy", populatedAddedByFilter);
+      await stock.execPopulate("courier");
 
-      if (!savedStock.populated("addedBy"))
+      if (!stock.populated("courier") || !stock.populated("addedBy"))
         throw new Error("Could not populate some paths.");
 
       return res.status(200).json({
-        stock: savedStock,
+        stock,
         message: `Stock with the batch no. "${stock.batch}" successfully marked as ${queries.mark}.`,
         success: true,
       });

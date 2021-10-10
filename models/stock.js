@@ -9,7 +9,7 @@ const StockSchema = new Schema(
     batch: { type: String, required: true, unique: true },
     _type: {
       type: String,
-      enum: ["inbound", "warehouse", "shipped", "sold"],
+      enum: ["inbound", "warehouse", "sold"],
       default: "inbound",
       required: true,
     },
@@ -28,7 +28,7 @@ const StockSchema = new Schema(
     arrivedOn: {
       type: Date,
       required: function () {
-        return this._type === "warehouse" || this._type === "shipped";
+        return this._type === "warehouse" || this._type === "sold";
       },
     },
     owner: { type: ObjectId, ref: "Customer" },

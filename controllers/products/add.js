@@ -110,17 +110,13 @@ const addProducts = async (req, res) => {
       addedBy: adminId,
     }).save();
 
-    const savedVariants = [];
     for (const variant of data.variants) {
-      const savedVariant = await new Variant({
+      await new Variant({
         ...variant,
         product: savedProduct._id,
         addedBy: adminId,
       }).save();
-      savedVariants.push(savedVariant);
     }
-
-    savedProduct.variants = savedVariants;
 
     await savedProduct.execPopulate({
       path: "variants",

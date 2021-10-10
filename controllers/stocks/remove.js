@@ -1,10 +1,5 @@
 const Stock = require("../../models/stock");
 
-const populatedAddedByFilter = {
-  username: 0,
-  password: 0,
-};
-
 const removeStocks = async (req, res) => {
   const {
     user: { id: adminId },

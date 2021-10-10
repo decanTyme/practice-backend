@@ -38,8 +38,6 @@ const addStocks = async (req, res) => {
         success: false,
       });
 
-    const product = await Product.findOne({ _id: variant.product });
-
     // Push the new stock data
     const savedStock = await new Stock({
       ...data,
@@ -49,9 +47,12 @@ const addStocks = async (req, res) => {
     }).save();
 
     await savedStock.execPopulate("addedBy", populatedAddedByFilter);
+    await savedStock.execPopulate("courier");
 
     if (!savedStock.populated("addedBy"))
       throw new Error("Could not populate some paths.");
+
+    const product = await Product.findOne({ _id: variant.product });
 
     return res.status(201).json({
       stock: savedStock,
