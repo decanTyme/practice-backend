@@ -99,10 +99,38 @@ const addProducts = async (req, res) => {
         success: false,
       });
 
+    if (!data.variants || data.variants.length === 0)
+      return res.status(404).json({
+        message: `Please provide at least one product variant.`,
+        success: false,
+      });
+
     const savedProduct = await new Product({
       ...data,
       addedBy: adminId,
     }).save();
+
+    const savedVariants = [];
+    for (const variant of data.variants) {
+      const savedVariant = await new Variant({
+        ...variant,
+        product: savedProduct._id,
+        addedBy: adminId,
+      }).save();
+      savedVariants.push(savedVariant);
+    }
+
+    savedProduct.variants = savedVariants;
+
+    await savedProduct.execPopulate({
+      path: "variants",
+      populate: {
+        path: "stocks",
+      },
+    });
+
+    if (!savedProduct.populated("variants"))
+      throw new Error("Could not populate some paths.");
 
     return res.status(201).json({
       product: savedProduct,

@@ -41,7 +41,7 @@ const removeProducts = async (req, res) => {
         stocks: deletedStockCount,
       },
       success: true,
-      message: "Successfully removed the product.",
+      message: `Successfully removed the product "${deletedProduct.brand} ${deletedProduct.name}".`,
     });
   } catch (error) {
     console.log("Error", error);

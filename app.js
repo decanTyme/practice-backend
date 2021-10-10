@@ -38,7 +38,7 @@ const allProtectedRoutes = require("./routes");
 const authenticateToken = require("./services/authenticate-token");
 
 // Custom Headers
-app.use((req, res, next) => {
+app.use((_, res, next) => {
   res.setHeader("Vary", "Origin");
   res.setHeader("Cache-Control", "no-cache, must-revalidate");
   next();
