@@ -1,6 +1,7 @@
 const Product = require("../../models/product");
 const Variant = require("../../models/variant");
 const Stock = require("../../models/stock");
+const Activity = require("../../models/activity");
 
 const removeProducts = async (req, res) => {
   const {
@@ -34,21 +35,41 @@ const removeProducts = async (req, res) => {
     const deletedVariants = await Variant.deleteMany({ product: queries._id });
     const deletedProduct = await Product.findByIdAndDelete(queries._id);
 
+    const savedActivity = await new Activity({
+      mode: "delete",
+      path: req.originalUrl,
+      record: deletedProduct._id,
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
+    }).save();
+
     return res.status(200).json({
       deleted: deletedProduct,
       deleteCounts: {
         variant: deletedVariants.deletedCount,
         stocks: deletedStockCount,
       },
+      activityRecord: savedActivity,
       success: true,
       message: `Successfully removed the product "${deletedProduct.brand} ${deletedProduct.name}".`,
     });
   } catch (error) {
     console.log("Error", error);
 
+    const savedActivity = await new Activity({
+      mode: "delete",
+      path: req.originalUrl,
+      user: adminId,
+      reason: error.message,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
+
     if (error instanceof TypeError)
       return res.status(500).json({
         error: JSON.stringify(error),
+        activityRecord: savedActivity,
         message: "There was an error in saving the product.",
       });
 
@@ -60,6 +81,7 @@ const removeProducts = async (req, res) => {
 
     return res.status(500).json({
       error: JSON.stringify(error),
+      activityRecord: savedActivity,
       message: "There was an error in saving the product.",
     });
   }

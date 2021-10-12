@@ -2,7 +2,11 @@ const Product = require("../../models/product");
 const Variant = require("../../models/variant");
 
 const modifyProducts = async (req, res) => {
-  const { body: data } = req;
+  const {
+    user: { id: adminId },
+    query: queries,
+    body: data,
+  } = req;
 
   const populatedAddedByFilter = {
     username: 0,
@@ -63,17 +67,36 @@ const modifyProducts = async (req, res) => {
         populate: { path: "addedBy", select: populatedAddedByFilter },
       });
 
-    console.log(updatedProduct);
+    const savedActivity = await new Activity({
+      mode: "update",
+      path: req.originalUrl,
+      record: updatedProduct._id,
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
+    }).save();
 
     res.status(200).json({
+      product: updatedProduct,
+      activityRecord: savedActivity,
       success: true,
       message: "Product updated successfully.",
-      product: updatedProduct,
     });
   } catch (error) {
     console.log(error);
-    return res.status(400).json({
+
+    const savedActivity = await new Activity({
+      mode: "update",
+      path: req.originalUrl,
+      reason: error.message,
+      user: adminId,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
+
+    return res.status(500).json({
       error,
+      activityRecord: savedActivity,
       message: "There was an error in updating the product.",
     });
   }

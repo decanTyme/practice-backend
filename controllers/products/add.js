@@ -1,3 +1,4 @@
+const Activity = require("../../models/activity");
 const Product = require("../../models/product");
 const Variant = require("../../models/variant");
 
@@ -6,6 +7,11 @@ const productExistFilter = (data) => ({
   code: data.code,
   brand: data.brand,
 });
+
+const populatedAddedByFilter = {
+  username: 0,
+  password: 0,
+};
 
 const addProducts = async (req, res) => {
   const {
@@ -26,6 +32,7 @@ const addProducts = async (req, res) => {
     if (queries.batch || Array.isArray(data)) {
       const savedProducts = [];
       const existingProducts = [];
+      const savedVariants = [];
 
       for (const item of data) {
         const isExist = await Product.exists(productExistFilter(item));
@@ -47,17 +54,12 @@ const addProducts = async (req, res) => {
             success: false,
           });
 
-        const savedProduct = await new Product({
-          ...item,
-          addedBy: adminId,
-        }).save();
+        const savedProduct = await new Product(item).save();
 
-        const savedVariants = [];
         for (const variant of item.variants) {
           const savedVariant = await new Variant({
             ...variant,
             product: savedProduct._id,
-            addedBy: adminId,
           }).save();
           savedVariants.push(savedVariant);
         }
@@ -66,18 +68,30 @@ const addProducts = async (req, res) => {
         savedProducts.push(savedProduct);
       }
 
-      if (savedProducts.length === 0) {
+      if (savedProducts.length === 0)
         return res.status(200).json({
           existing: existingProducts,
           success: false,
           message: "No new products were saved.",
         });
-      }
+
+      const savedActivity = await new Activity({
+        mode: "add",
+        path: req.originalUrl,
+        record: [
+          ...savedVariants.map(({ _id }) => _id),
+          ...savedProducts.map(({ _id }) => _id),
+        ],
+        user: adminId,
+        status: "success",
+        date: new Date().toISOString(),
+      }).save();
 
       if (existingProducts.length !== 0)
         return res.status(201).json({
           saved: savedProducts,
           existing: existingProducts,
+          activityRecord: savedActivity,
           success: true,
           message: "Some products were not saved because they already exist.",
         });
@@ -85,6 +99,7 @@ const addProducts = async (req, res) => {
       return res.status(201).json({
         saved: savedProducts,
         success: true,
+        activityRecord: savedActivity,
         message: "Successfully added the products.",
       });
     }
@@ -105,17 +120,16 @@ const addProducts = async (req, res) => {
         success: false,
       });
 
-    const savedProduct = await new Product({
-      ...data,
-      addedBy: adminId,
-    }).save();
+    const savedProduct = await new Product(data).save();
 
+    const savedVariantIds = [];
     for (const variant of data.variants) {
-      await new Variant({
+      const savedVariant = await new Variant({
         ...variant,
         product: savedProduct._id,
-        addedBy: adminId,
       }).save();
+
+      savedVariantIds.push(savedVariant._id);
     }
 
     await savedProduct.execPopulate({
@@ -125,19 +139,50 @@ const addProducts = async (req, res) => {
       },
     });
 
+    await savedProduct.execPopulate({
+      path: "brand",
+      select: { name: 1 },
+    });
+
     if (!savedProduct.populated("variants"))
       throw new Error("Could not populate some paths.");
 
+    const savedActivity = await new Activity({
+      mode: "add",
+      path: req.originalUrl,
+      record: [...savedVariantIds, savedProduct._id],
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
+    }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     return res.status(201).json({
       product: savedProduct,
+      activityRecord: savedActivity,
       success: true,
+      message: `Successfully created the product "${savedProduct.brand.name} ${data.name}".`,
     });
   } catch (error) {
     console.log("Error", error);
 
+    const savedActivity = await new Activity({
+      mode: "add",
+      path: req.originalUrl,
+      reason: error.message,
+      user: adminId,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
+
     if (error instanceof TypeError)
       return res.status(500).json({
         error: JSON.stringify(error),
+        activityRecord: savedActivity,
         message: "There was an error in saving the product.",
       });
 
@@ -149,6 +194,7 @@ const addProducts = async (req, res) => {
 
     return res.status(500).json({
       error: JSON.stringify(error),
+      activityRecord: savedActivity,
       message: "There was an error in saving the product.",
     });
   }

@@ -25,16 +25,36 @@ const removeStocks = async (req, res) => {
 
     await Stock.deleteOne({ _id: queries._id });
 
+    const savedActivity = await new Activity({
+      mode: "delete",
+      path: req.originalUrl,
+      record: queries._id,
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
+    }).save();
+
     return res.status(200).json({
+      activityRecord: savedActivity,
       message: `Stock with the batch no. "${stock.batch}" successfully deleted.`,
       success: true,
     });
   } catch (error) {
     console.log("Error", error);
 
+    const savedActivity = await new Activity({
+      mode: "delete",
+      path: req.originalUrl,
+      reason: error.message,
+      user: adminId,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
+
     if (error instanceof TypeError)
       return res.status(500).json({
         error: JSON.stringify(error),
+        activityRecord: savedActivity,
         message: "There was an error in saving the product.",
       });
 

@@ -6,7 +6,7 @@ const ProductSchema = new Schema(
   {
     code: { type: String, required: true },
     name: { type: String, required: true },
-    brand: { type: String, required: true },
+    brand: { type: ObjectId, ref: "Brand", required: true },
     _class: { type: String, required: true },
     category: { type: String, required: true },
     description: {
@@ -27,9 +27,7 @@ const ProductSchema = new Schema(
         },
       },
     ],
-    addedBy: { type: ObjectId, ref: "User", required: true },
-    updatedBy: [{ type: ObjectId, ref: "User" }],
-    deletedBy: [{ type: ObjectId, ref: "User" }],
+    includedIn: { type: ObjectId, ref: "Product" },
   },
   {
     timestamps: true,
@@ -49,10 +47,37 @@ ProductSchema.virtual("variants", {
   options: { sort: { name: 1 } },
 });
 
+ProductSchema.virtual("addedBy", {
+  ref: "Activity",
+  localField: "_id",
+  foreignField: "record",
+
+  justOne: true,
+  options: { match: { mode: "add" } },
+});
+
+ProductSchema.virtual("updatedBy", {
+  ref: "Activity",
+  localField: "_id",
+  foreignField: "record",
+
+  justOne: false,
+  options: { match: { mode: "update" }, sort: { date: 1 } },
+});
+
+ProductSchema.virtual("deletedBy", {
+  ref: "Activity",
+  localField: "_id",
+  foreignField: "record",
+
+  justOne: true,
+  options: { match: { mode: "delete" } },
+});
+
 // ProductSchema.virtual("composedOf", {
 //   ref: "Product",
-//   localField: "id",
-//   foreignField: "product",
+//   localField: "_id",
+//   foreignField: "includedIn",
 
 //   justOne: false,
 //   options: { sort: { name: 1 } },

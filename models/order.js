@@ -7,11 +7,10 @@ const OrderSchema = new Schema(
     _type: { type: String, required: true },
     products: [
       {
-        item: { type: ObjectId, ref: "Product", required: true },
+        item: { type: ObjectId, ref: "Variant", required: true },
         quantity: { type: String, required: true },
       },
     ],
-    customer: { type: ObjectId, ref: "Customer" },
   },
   { timestamps: true }
 );

@@ -1,5 +1,11 @@
 const mongoose = require("mongoose");
 const Customer = require("../models/customer");
+const Activity = require("../models/activity");
+
+const populatedAddedByFilter = {
+  username: 0,
+  password: 0,
+};
 
 class NotModifiedError extends Error {
   constructor(message = "No items were modified.") {
@@ -17,11 +23,24 @@ exports.load = async (req, res) => {
   const body = req.body;
 
   try {
-    if (queries.populate) {
-      const customers = await Customer.find().populate("addedBy", {
-        username: 0,
-        password: 0,
-      });
+    if (queries.populate === "none") {
+      const customers = await Customer.find({})
+        .populate({
+          path: "addedBy",
+          select: { createdAt: 0, updatedAt: 0 },
+          populate: { path: "user", select: populatedAddedByFilter },
+        })
+        .populate({
+          path: "updatedBy",
+          select: { createdAt: 0, updatedAt: 0 },
+          populate: { path: "user", select: populatedAddedByFilter },
+        })
+        .populate({
+          path: "deletedBy",
+          select: { createdAt: 0, updatedAt: 0 },
+          populate: { path: "user", select: populatedAddedByFilter },
+        })
+        .populate("transactions");
 
       return res.status(200).json(customers);
     }
@@ -31,7 +50,7 @@ exports.load = async (req, res) => {
     return res.status(200).json(customers);
   } catch (error) {
     res.status(500).json({
-      error: error,
+      error: JSON.stringify(error),
       message: generateErrorMsg(queries.type),
     });
   }
@@ -44,29 +63,49 @@ exports.add = async (req, res) => {
     body: data,
   } = req;
 
-  const isExist = await Customer.exists({
-    firstname: data.firstname,
-    lastname: data.lastname,
-  });
-
-  if (isExist)
-    return res.status(200).json({
-      message: `Customer "${data.firstname} ${data.lastname}" already exists.`,
-      success: false,
+  try {
+    const isExist = await Customer.exists({
+      firstname: data.firstname,
+      lastname: data.lastname,
     });
 
-  const customer = new Customer({
-    ...data,
-    addedBy: adminId,
-  });
+    if (isExist)
+      return res.status(200).json({
+        message: `Customer "${data.firstname} ${data.lastname}" already exists.`,
+        success: false,
+      });
 
-  try {
-    await customer.save();
+    const savedCustomer = await new Customer({
+      ...data,
+      addedBy: adminId,
+    }).save();
 
-    res.status(200).json(customer);
+    const savedActivity = await new Activity({
+      mode: "add",
+      record: savedCustomer._id,
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
+    }).save();
+
+    res.status(200).json({
+      customer: savedCustomer,
+      activityRecord: savedActivity,
+      success: true,
+      message: "Successfully added the customer.",
+    });
   } catch (error) {
+    const savedActivity = await new Activity({
+      mode: "add",
+      user: adminId,
+      reason: error.message,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
+
     res.status(500).json({
-      error: error,
+      error: JSON.stringify(error),
+      activityRecord: savedActivity,
       message: generateErrorMsg(queries.type),
     });
   }

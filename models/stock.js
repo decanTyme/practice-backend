@@ -31,27 +31,42 @@ const StockSchema = new Schema(
         return this._type === "warehouse" || this._type === "sold";
       },
     },
-    owner: { type: ObjectId, ref: "Customer" },
-    addedBy: { type: ObjectId, ref: "User", required: true },
-    updatedBy: [
-      {
-        user: { type: ObjectId, ref: "User" },
-        timestamp: { type: Date, default: new Date().toISOString() },
-      },
-    ],
-    deletedBy: [
-      {
-        user: { type: ObjectId, ref: "User" },
-        timestamp: { type: Date, default: new Date().toISOString() },
-      },
-    ],
   },
   {
     timestamps: true,
     strict: true,
     useNestedStrict: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
+
+StockSchema.virtual("addedBy", {
+  ref: "Activity",
+  localField: "_id",
+  foreignField: "record",
+
+  justOne: true,
+  options: { match: { mode: "add" } },
+});
+
+StockSchema.virtual("updatedBy", {
+  ref: "Activity",
+  localField: "_id",
+  foreignField: "record",
+
+  justOne: false,
+  options: { match: { mode: "update" }, sort: { date: 1 } },
+});
+
+StockSchema.virtual("deletedBy", {
+  ref: "Activity",
+  localField: "_id",
+  foreignField: "record",
+
+  justOne: true,
+  options: { match: { mode: "delete" } },
+});
 
 StockSchema.plugin(uniqueValidator);
 

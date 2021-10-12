@@ -1,6 +1,7 @@
 const Product = require("../../models/product");
 const Variant = require("../../models/variant");
 const Stock = require("../../models/stock");
+const Activity = require("../../models/activity");
 
 const populatedAddedByFilter = {
   username: 0,
@@ -43,28 +44,44 @@ const addStocks = async (req, res) => {
       ...data,
       variant: queries._id,
       _type: queries._type,
-      addedBy: adminId,
+    }).save();
+
+    const product = await Product.findOne({ _id: variant.product });
+
+    const savedActivity = await new Activity({
+      mode: "add",
+      path: req.originalUrl,
+      record: savedStock._id,
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
     }).save();
 
     await savedStock.execPopulate("addedBy", populatedAddedByFilter);
     await savedStock.execPopulate("courier");
 
-    if (!savedStock.populated("addedBy"))
-      throw new Error("Could not populate some paths.");
-
-    const product = await Product.findOne({ _id: variant.product });
-
     return res.status(201).json({
       stock: savedStock,
-      message: `New inbound stock added to "${product.brand} ${product.name}" with the batch no. "${data.batch}" in variant "${variant.name}".`,
+      activityRecord: savedActivity,
       success: true,
+      message: `New inbound stock added to "${product.brand} ${product.name}" with the batch no. "${data.batch}" in variant "${variant.name}".`,
     });
   } catch (error) {
     console.log("Error", error);
 
+    const savedActivity = await new Activity({
+      mode: "add",
+      path: req.originalUrl,
+      reason: error.message,
+      user: adminId,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
+
     if (error instanceof TypeError)
       return res.status(500).json({
         error: JSON.stringify(error),
+        activityRecord: savedActivity,
         message: "There was an error in saving the product.",
       });
 

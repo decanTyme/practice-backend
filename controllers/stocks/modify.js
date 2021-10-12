@@ -1,4 +1,5 @@
 const Stock = require("../../models/stock");
+const Activity = require("../../models/activity");
 
 const populatedAddedByFilter = {
   username: 0,
@@ -28,25 +29,44 @@ const modifyStocks = async (req, res) => {
           success: false,
         });
 
-      // if (stock.checked === queries.mark)
-      //   return res.status(200).json({
-      //     message: `Stock with ID "${queries._id}" is already marked as ${queries.mark}.`,
-      //     success: false,
-      //   });
+      if (stock.checked === queries.mark)
+        return res.status(200).json({
+          message: `Stock with ID "${queries._id}" is already marked as ${queries.mark}.`,
+          success: false,
+        });
+
+      const prevMark = stock.checked;
 
       stock.checked = queries.mark;
       stock.updatedBy.push({ user: adminId });
 
       await stock.save();
 
-      await stock.execPopulate("addedBy", populatedAddedByFilter);
-      await stock.execPopulate("courier");
+      const savedActivity = await new Activity({
+        mode: "update",
+        path: req.originalUrl,
+        record: stock._id,
+        reason: `Stock marked from ${prevMark} to ${queries.mark}.`,
+        user: adminId,
+        status: "success",
+        date: new Date().toISOString(),
+      }).save();
 
-      if (!stock.populated("courier") || !stock.populated("addedBy"))
-        throw new Error("Could not populate some paths.");
+      await stock.execPopulate({
+        path: "addedBy",
+        populate: { path: "user", select: populatedAddedByFilter },
+      });
+
+      await stock.execPopulate({
+        path: "updatedBy",
+        populate: { path: "user", select: populatedAddedByFilter },
+      });
+
+      await stock.execPopulate("courier");
 
       return res.status(200).json({
         stock,
+        activityRecord: savedActivity,
         message: `Stock with the batch no. "${stock.batch}" successfully marked as ${queries.mark}.`,
         success: true,
       });
@@ -54,9 +74,19 @@ const modifyStocks = async (req, res) => {
   } catch (error) {
     console.log("Error", error);
 
+    const savedActivity = await new Activity({
+      mode: "update",
+      path: req.originalUrl,
+      reason: error.message,
+      user: adminId,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
+
     if (error instanceof TypeError)
       return res.status(500).json({
         error: JSON.stringify(error),
+        activityRecord: savedActivity,
         message: "There was an error in saving the product.",
       });
 
@@ -68,6 +98,7 @@ const modifyStocks = async (req, res) => {
 
     return res.status(500).json({
       error: JSON.stringify(error) || error.message,
+      activityRecord: savedActivity,
       message: "There was an error in saving the stock.",
     });
   }

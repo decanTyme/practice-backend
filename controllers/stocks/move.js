@@ -42,30 +42,58 @@ const moveStocks = async (req, res) => {
 
     // If it was moved from inbound to warehouse, it means the stock has
     // arrived, hence auto append an arrival date
-    if (stock._type === "inbound" && queries._type === "warehouse")
+    // Also, the stock should also be already inventory checked
+    if (stock._type === "inbound" && queries._type === "warehouse") {
       stock.arrivedOn = new Date().toISOString();
+      stock.checked = true;
+    }
 
     stock._type = queries._type;
-    stock.updatedBy.push({ user: adminId });
 
     const movedStock = await stock.save();
 
-    await movedStock.execPopulate("addedBy", populatedAddedByFilter);
+    const savedActivity = await new Activity({
+      mode: "update",
+      path: req.originalUrl,
+      record: movedStock._id,
+      reason: `Move stock from ${stock._type} to ${queries._type}.`,
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
+    }).save();
 
-    if (!movedStock.populated("addedBy"))
-      throw new Error("Could not populate some paths.");
+    await movedStock.execPopulate({
+      path: "addedBy",
+      populate: { path: "user", select: populatedAddedByFilter },
+    });
+
+    await movedStock.execPopulate({
+      path: "updatedBy",
+      populate: { path: "user", select: populatedAddedByFilter },
+    });
 
     return res.status(200).json({
       moved: movedStock,
-      message: `Stock with the batch no. "${stock.batch}" successfully moved to ${queries._type}.`,
+      activityRecord: savedActivity,
       success: true,
+      message: `Stock with the batch no. "${stock.batch}" successfully moved to ${queries._type}.`,
     });
   } catch (error) {
     console.log("Error", error);
 
+    const savedActivity = await new Activity({
+      mode: "update",
+      path: req.originalUrl,
+      reason: error.message,
+      user: adminId,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
+
     if (error instanceof TypeError)
       return res.status(500).json({
         error: JSON.stringify(error),
+        activityRecord: savedActivity,
         message: "There was an error in saving the product.",
       });
 

@@ -5,46 +5,93 @@ const addVariant = async (req, res) => {
   const {
     user: { id: adminId },
     query: queries,
+    params,
     body: data,
+    productId,
   } = req;
 
-  if (!queries._id)
+  if (!productId)
     return res.status(400).json({
       success: false,
       message: "No product id was given.",
     });
 
-  const product = await Product.findOne({ _id: queries._id });
+  try {
+    const product = await Product.findOne({ _id: productId });
 
-  if (!product)
-    return res.status(404).json({
-      message: `Product with ID "${queries._id}" does not exist.`,
-      success: false,
+    if (!product)
+      return res.status(404).json({
+        message: `Product with ID "${productId}" does not exist.`,
+        success: false,
+      });
+
+    const isExist = await Variant.exists({
+      product: productId,
+      name: data.name,
     });
 
-  const isExist = await Variant.exists({
-    product: queries._id,
-    name: data.name,
-  });
+    if (isExist)
+      return res.status(200).json({
+        message: `Variant "${data.name}" already exists on product "${product.brand} ${product.name}".`,
+        success: false,
+      });
 
-  if (isExist)
-    return res.status(200).json({
-      message: `Variant "${data.name}" already exists on product "${product.brand} ${product.name}".`,
-      success: false,
+    const savedVariant = await new Variant({
+      ...data,
+      product: productId,
+    }).save();
+
+    const savedActivity = await new Activity({
+      mode: "add",
+      path: req.originalUrl,
+      record: savedVariant._id,
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
+    }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
     });
 
-  const savedVariant = await new Variant({
-    ...data,
-    product: queries._id,
-    addedBy: adminId,
-  }).save();
+    return res.status(201).json({
+      variant: savedVariant,
+      activityRecord: savedActivity,
+      message: `Successfully created the variant "${data.name}" on "${product.name}".`,
+      success: true,
+    });
+  } catch (error) {
+    console.log("Error", error);
 
-  // console.log(data, savedProduct);
+    const savedActivity = await new Activity({
+      mode: "add",
+      path: req.originalUrl,
+      reason: error.message,
+      user: adminId,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
 
-  return res.status(201).json({
-    variant: savedVariant,
-    success: true,
-  });
+    if (error instanceof TypeError)
+      return res.status(500).json({
+        error: JSON.stringify(error),
+        activityRecord: savedActivity,
+        message: "There was an error in saving the product.",
+      });
+
+    // if (error instanceof CastError)
+    //   return res.status(500).json({
+    //     error: `${error.name}: ${error.message}`,
+    //     message: "There was an error in adding the stock to the product.",
+    //   });
+
+    return res.status(500).json({
+      error: JSON.stringify(error),
+      activityRecord: savedActivity,
+      message: "There was an error in saving the product.",
+    });
+  }
 };
 
 module.exports = addVariant;

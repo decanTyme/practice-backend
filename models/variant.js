@@ -48,9 +48,6 @@ const VariantSchema = new Schema(
       },
     ],
     prices: [PriceSchema],
-    addedBy: { type: ObjectId, ref: "User", required: true },
-    updatedBy: [{ type: ObjectId, ref: "User" }],
-    deletedBy: [{ type: ObjectId, ref: "User" }],
   },
   {
     timestamps: true,
@@ -68,6 +65,33 @@ VariantSchema.virtual("stocks", {
 
   justOne: false,
   options: { sort: { expiry: 1 } },
+});
+
+VariantSchema.virtual("addedBy", {
+  ref: "Activity",
+  localField: "_id",
+  foreignField: "record",
+
+  justOne: true,
+  options: { match: { mode: "add" } },
+});
+
+VariantSchema.virtual("updatedBy", {
+  ref: "Activity",
+  localField: "_id",
+  foreignField: "record",
+
+  justOne: false,
+  options: { match: { mode: "update" }, sort: { date: 1 } },
+});
+
+VariantSchema.virtual("deletedBy", {
+  ref: "Activity",
+  localField: "_id",
+  foreignField: "record",
+
+  justOne: true,
+  options: { match: { mode: "delete" } },
 });
 
 // VariantSchema.virtual("includedIn", {
