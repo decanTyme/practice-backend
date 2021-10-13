@@ -3,6 +3,11 @@ const Variant = require("../../models/variant");
 const Stock = require("../../models/stock");
 const Activity = require("../../models/activity");
 
+const populatedAddedByFilter = {
+  username: 0,
+  password: 0,
+};
+
 const removeProducts = async (req, res) => {
   const {
     user: { id: adminId },
@@ -44,6 +49,11 @@ const removeProducts = async (req, res) => {
       date: new Date().toISOString(),
     }).save();
 
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     return res.status(200).json({
       deleted: deletedProduct,
       deleteCounts: {
@@ -65,6 +75,11 @@ const removeProducts = async (req, res) => {
       status: "fail",
       date: new Date().toISOString(),
     }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     if (error instanceof TypeError)
       return res.status(500).json({

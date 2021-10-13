@@ -1,5 +1,11 @@
 const Product = require("../../models/product");
 const Variant = require("../../models/variant");
+const Activity = require("../../models/activity");
+
+const populatedAddedByFilter = {
+  username: 0,
+  password: 0,
+};
 
 const modifyProducts = async (req, res) => {
   const {
@@ -7,11 +13,6 @@ const modifyProducts = async (req, res) => {
     query: queries,
     body: data,
   } = req;
-
-  const populatedAddedByFilter = {
-    username: 0,
-    password: 0,
-  };
 
   try {
     const isExist = await Product.exists({ _id: data._id });
@@ -76,6 +77,11 @@ const modifyProducts = async (req, res) => {
       date: new Date().toISOString(),
     }).save();
 
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     res.status(200).json({
       product: updatedProduct,
       activityRecord: savedActivity,
@@ -93,6 +99,11 @@ const modifyProducts = async (req, res) => {
       status: "fail",
       date: new Date().toISOString(),
     }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     return res.status(500).json({
       error,

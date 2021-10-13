@@ -1,5 +1,11 @@
 const Product = require("../../../models/product");
 const Variant = require("../../../models/variant");
+const Activity = require("../../../models/activity");
+
+const populatedAddedByFilter = {
+  username: 0,
+  password: 0,
+};
 
 const addVariant = async (req, res) => {
   const {
@@ -72,6 +78,11 @@ const addVariant = async (req, res) => {
       status: "fail",
       date: new Date().toISOString(),
     }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     if (error instanceof TypeError)
       return res.status(500).json({

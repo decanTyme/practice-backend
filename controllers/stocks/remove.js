@@ -1,4 +1,10 @@
 const Stock = require("../../models/stock");
+const Activity = require("../../models/activity");
+
+const populatedAddedByFilter = {
+  username: 0,
+  password: 0,
+};
 
 const removeStocks = async (req, res) => {
   const {
@@ -34,6 +40,11 @@ const removeStocks = async (req, res) => {
       date: new Date().toISOString(),
     }).save();
 
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     return res.status(200).json({
       activityRecord: savedActivity,
       message: `Stock with the batch no. "${stock.batch}" successfully deleted.`,
@@ -50,6 +61,11 @@ const removeStocks = async (req, res) => {
       status: "fail",
       date: new Date().toISOString(),
     }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     if (error instanceof TypeError)
       return res.status(500).json({

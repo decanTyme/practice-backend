@@ -15,6 +15,7 @@ const addStocks = async (req, res) => {
     body: data,
   } = req;
 
+  console.log(req.path, queries, data);
   try {
     if (!queries._id)
       return res.status(400).json({
@@ -57,8 +58,17 @@ const addStocks = async (req, res) => {
       date: new Date().toISOString(),
     }).save();
 
-    await savedStock.execPopulate("addedBy", populatedAddedByFilter);
+    await savedStock.execPopulate({
+      path: "addedBy",
+      populate: { path: "user", select: populatedAddedByFilter },
+    });
+
     await savedStock.execPopulate("courier");
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     return res.status(201).json({
       stock: savedStock,
@@ -77,6 +87,11 @@ const addStocks = async (req, res) => {
       status: "fail",
       date: new Date().toISOString(),
     }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     if (error instanceof TypeError)
       return res.status(500).json({

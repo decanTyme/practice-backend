@@ -38,7 +38,6 @@ const modifyStocks = async (req, res) => {
       const prevMark = stock.checked;
 
       stock.checked = queries.mark;
-      stock.updatedBy.push({ user: adminId });
 
       await stock.save();
 
@@ -64,6 +63,11 @@ const modifyStocks = async (req, res) => {
 
       await stock.execPopulate("courier");
 
+      await savedActivity.execPopulate({
+        path: "user",
+        select: populatedAddedByFilter,
+      });
+
       return res.status(200).json({
         stock,
         activityRecord: savedActivity,
@@ -82,6 +86,11 @@ const modifyStocks = async (req, res) => {
       status: "fail",
       date: new Date().toISOString(),
     }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     if (error instanceof TypeError)
       return res.status(500).json({

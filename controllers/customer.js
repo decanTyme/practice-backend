@@ -88,6 +88,11 @@ exports.add = async (req, res) => {
       date: new Date().toISOString(),
     }).save();
 
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     res.status(200).json({
       customer: savedCustomer,
       activityRecord: savedActivity,
@@ -102,6 +107,11 @@ exports.add = async (req, res) => {
       status: "fail",
       date: new Date().toISOString(),
     }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     res.status(500).json({
       error: JSON.stringify(error),
@@ -124,18 +134,49 @@ exports.modify = async (req, res) => {
     if (!updatedCustomer)
       throw new NotModifiedError(`No customer with ID ${_id} found.`);
 
+    const savedActivity = await new Activity({
+      mode: "update",
+      record: updatedCustomer._id,
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
+    }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     res.status(200).json({
       customer: updatedCustomer,
-      success: true,
+      activityRecord: savedActivity,
       message: "Successfully updated the customer details.",
+      success: true,
     });
   } catch (error) {
     console.log(error);
 
+    const savedActivity = await new Activity({
+      mode: "update",
+      user: adminId,
+      reason: error.message,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     if (error instanceof NotModifiedError)
       return res.status(500).json({ success: false, message: error.message });
 
-    res.status(500).json(error);
+    res.status(500).json({
+      error: JSON.stringify(error),
+      activityRecord: savedActivity,
+      message: generateErrorMsg(queries.type),
+    });
   }
 };
 

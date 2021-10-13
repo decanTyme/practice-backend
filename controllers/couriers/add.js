@@ -1,4 +1,10 @@
 const Courier = require("../../models/courier");
+const Activity = require("../../models/activity");
+
+const populatedAddedByFilter = {
+  username: 0,
+  password: 0,
+};
 
 const addCouriers = async (req, res) => {
   const {
@@ -23,22 +29,54 @@ const addCouriers = async (req, res) => {
       addedBy: adminId,
     }).save();
 
+    const savedActivity = await new Activity({
+      mode: "add",
+      path: req.originalUrl,
+      record: savedCourier._id,
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
+    }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     return res.status(200).json({
       courier: savedCourier,
+      activityRecord: savedActivity,
+      message: `Successfully saved courier "${savedCourier.name}".`,
       success: true,
     });
   } catch (error) {
     console.log("Error", error);
 
+    const savedActivity = await new Activity({
+      mode: "add",
+      path: req.originalUrl,
+      reason: error.message,
+      user: adminId,
+      status: "fail",
+      date: new Date().toISOString(),
+    }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     if (error instanceof TypeError)
       return res.status(500).json({
         error: `${error.name}: ${error.message}`,
-        message: "There was an error in saving the stock.",
+        activityRecord: savedActivity,
+        message: "There was an error in saving the courier.",
       });
 
     return res.status(500).json({
       error: `${error.name}: ${error.message}`,
-      message: "There was an error in fetching the stock.",
+      activityRecord: savedActivity,
+      message: "There was an error in fetching the courier.",
     });
   }
 };

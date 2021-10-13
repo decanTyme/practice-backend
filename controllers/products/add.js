@@ -87,6 +87,11 @@ const addProducts = async (req, res) => {
         date: new Date().toISOString(),
       }).save();
 
+      await savedActivity.execPopulate({
+        path: "user",
+        select: populatedAddedByFilter,
+      });
+
       if (existingProducts.length !== 0)
         return res.status(201).json({
           saved: savedProducts,
@@ -178,6 +183,11 @@ const addProducts = async (req, res) => {
       status: "fail",
       date: new Date().toISOString(),
     }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     if (error instanceof TypeError)
       return res.status(500).json({

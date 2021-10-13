@@ -1,4 +1,5 @@
 const Stock = require("../../models/stock");
+const Activity = require("../../models/activity");
 
 const populatedAddedByFilter = {
   username: 0,
@@ -42,11 +43,15 @@ const moveStocks = async (req, res) => {
 
     // If it was moved from inbound to warehouse, it means the stock has
     // arrived, hence auto append an arrival date
-    // Also, the stock should also be already inventory checked
-    if (stock._type === "inbound" && queries._type === "warehouse") {
+    if (stock._type === "inbound" && queries._type === "warehouse")
       stock.arrivedOn = new Date().toISOString();
+
+    // The stock should also be already inventory checked if moved from
+    // warehouse to sold
+    if (stock._type === "warehouse" && queries._type === "sold")
       stock.checked = true;
-    }
+
+    const prevType = stock._type;
 
     stock._type = queries._type;
 
@@ -56,7 +61,7 @@ const moveStocks = async (req, res) => {
       mode: "update",
       path: req.originalUrl,
       record: movedStock._id,
-      reason: `Move stock from ${stock._type} to ${queries._type}.`,
+      reason: `Move stock from "${prevType}" to "${queries._type}".`,
       user: adminId,
       status: "success",
       date: new Date().toISOString(),
@@ -72,6 +77,11 @@ const moveStocks = async (req, res) => {
       populate: { path: "user", select: populatedAddedByFilter },
     });
 
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     return res.status(200).json({
       moved: movedStock,
       activityRecord: savedActivity,
@@ -79,7 +89,7 @@ const moveStocks = async (req, res) => {
       message: `Stock with the batch no. "${stock.batch}" successfully moved to ${queries._type}.`,
     });
   } catch (error) {
-    console.log("Error", error);
+    console.log(req.originalUrl, "Error", error);
 
     const savedActivity = await new Activity({
       mode: "update",
@@ -89,6 +99,11 @@ const moveStocks = async (req, res) => {
       status: "fail",
       date: new Date().toISOString(),
     }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     if (error instanceof TypeError)
       return res.status(500).json({

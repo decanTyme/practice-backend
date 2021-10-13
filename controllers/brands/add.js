@@ -1,6 +1,11 @@
 const Brand = require("../../models/brand");
 const Activity = require("../../models/activity");
 
+const populatedAddedByFilter = {
+  username: 0,
+  password: 0,
+};
+
 const addBrands = async (req, res) => {
   const {
     user: { id: adminId },
@@ -28,6 +33,11 @@ const addBrands = async (req, res) => {
       date: new Date().toISOString(),
     }).save();
 
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
     res.status(200).json({
       brand: savedBrand,
       activityRecord: savedActivity,
@@ -45,6 +55,11 @@ const addBrands = async (req, res) => {
       status: "fail",
       date: new Date().toISOString(),
     }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
 
     if (error instanceof TypeError)
       return res.status(500).json({
