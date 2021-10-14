@@ -23,7 +23,7 @@ const addStocks = async (req, res) => {
         message: "No variant id was given.",
       });
 
-    const variant = await Variant.findOne({ _id: queries._id });
+    const variant = await Variant.findById(queries._id);
 
     if (!variant)
       return res.status(404).json({
@@ -40,6 +40,10 @@ const addStocks = async (req, res) => {
         success: false,
       });
 
+    // If the added stock was already sold, then it means
+    // that the stock has already been checked
+    if (queries._type === "sold") data.checked = true;
+
     // Push the new stock data
     const savedStock = await new Stock({
       ...data,
@@ -47,7 +51,7 @@ const addStocks = async (req, res) => {
       _type: queries._type,
     }).save();
 
-    const product = await Product.findOne({ _id: variant.product });
+    const product = await Product.findById(variant.product);
 
     const savedActivity = await new Activity({
       mode: "add",

@@ -85,8 +85,8 @@ const moveStocks = async (req, res) => {
     return res.status(200).json({
       moved: movedStock,
       activityRecord: savedActivity,
-      success: true,
       message: `Stock with the batch no. "${stock.batch}" successfully moved to ${queries._type}.`,
+      success: true,
     });
   } catch (error) {
     console.log(req.originalUrl, "Error", error);

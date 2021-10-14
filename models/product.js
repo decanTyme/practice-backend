@@ -14,19 +14,17 @@ const ProductSchema = new Schema(
       default: "Description of the product here...",
     },
     unit: { type: String, enum: ["single", "set"], required: true },
-    images: [
-      {
-        url: {
-          type: String,
-          default:
-            "https://nayemdevs.com/wp-content/uploads/2020/03/default-product-image.png",
-        },
-        caption: {
-          type: String,
-          default: "Insert caption here...",
-        },
+    images: {
+      type: Array,
+      of: {
+        url: { type: String },
+        caption: { type: String, default: "Insert caption here..." },
       },
-    ],
+      default: {
+        url: "https://nayemdevs.com/wp-content/uploads/2020/03/default-product-image.png",
+        caption: "Insert caption here...",
+      },
+    },
     includedIn: { type: ObjectId, ref: "Product" },
   },
   {

@@ -5,6 +5,7 @@ const uniqueValidator = require("mongoose-unique-validator");
 
 const BrandSchema = new Schema(
   {
+    _type: { type: String },
     name: { type: String, required: true, unique: true },
     locations: [
       {
@@ -20,6 +21,7 @@ const BrandSchema = new Schema(
       type: String,
       default: "Insert additional brand information here...",
     },
+    links: [{ type: String, enum: ["Inc.", "Co.", "Corp.", "LLC", "Ltd."] }],
   },
   {
     timestamps: true,

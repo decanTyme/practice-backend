@@ -111,13 +111,19 @@ const addProducts = async (req, res) => {
 
     // If the product already exists, do not perform a save
     // and notify the user
-    const isExist = await Product.exists(productExistFilter(data));
+    const product = await Product.findOne(productExistFilter(data));
 
-    if (isExist)
+    if (product) {
+      await product.execPopulate({
+        path: "brand",
+        select: { name: 1 },
+      });
+
       return res.status(200).json({
-        message: `Product "${data.brand} ${data.name}" already exists.`,
+        message: `Product "${product.brand.name} ${product.name}" with serial number "${product.code}" already exists.`,
         success: false,
       });
+    }
 
     if (!data.variants || data.variants.length === 0)
       return res.status(404).json({

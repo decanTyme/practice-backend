@@ -21,13 +21,15 @@ const removeProducts = async (req, res) => {
         message: "No product id was given.",
       });
 
-    const isExist = await Product.exists({ _id: queries._id });
+    const product = await Product.findById(queries._id);
 
-    if (!isExist)
+    if (!product)
       return res.status(404).json({
         message: `Product with ID "${queries._id}" does not exist.`,
         success: false,
       });
+
+    await product.execPopulate({ path: "brand" });
 
     const variants = await Variant.find({ product: queries._id });
 
@@ -62,7 +64,7 @@ const removeProducts = async (req, res) => {
       },
       activityRecord: savedActivity,
       success: true,
-      message: `Successfully removed the product "${deletedProduct.brand} ${deletedProduct.name}".`,
+      message: `Successfully removed the product "${product.brand.name} ${product.name}".`,
     });
   } catch (error) {
     console.log("Error", error);
