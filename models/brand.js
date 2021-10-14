@@ -5,23 +5,25 @@ const uniqueValidator = require("mongoose-unique-validator");
 
 const BrandSchema = new Schema(
   {
-    _type: { type: String },
+    _type: { type: String, enum: ["Inc.", "Co.", "Corp.", "LLC", "Ltd."] },
     name: { type: String, required: true, unique: true },
-    locations: [
-      {
-        _type: { type: String, required: true },
+    locations: {
+      type: Array,
+      of: {
+        _type: { type: String, enum: ["main", "branch"], required: true },
+        postcode: { type: Number, required: true },
         street: { type: String, required: true },
         purok: { type: String, required: true },
         barangay: { type: String, required: true },
         province: { type: String, required: true },
-        postcode: { type: String, required: true },
       },
-    ],
+      default: [],
+    },
     bio: {
       type: String,
       default: "Insert additional brand information here...",
     },
-    links: [{ type: String, enum: ["Inc.", "Co.", "Corp.", "LLC", "Ltd."] }],
+    links: [{ type: String }],
   },
   {
     timestamps: true,
