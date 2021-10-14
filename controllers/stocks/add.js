@@ -15,7 +15,7 @@ const addStocks = async (req, res) => {
     body: data,
   } = req;
 
-  console.log(req.path, queries, data);
+  console.log(req.path, queries);
   try {
     if (!queries._id)
       return res.status(400).json({
@@ -53,6 +53,11 @@ const addStocks = async (req, res) => {
 
     const product = await Product.findById(variant.product);
 
+    await product.execPopulate({
+      path: "brand",
+      select: { name: 1 },
+    });
+
     const savedActivity = await new Activity({
       mode: "add",
       path: req.originalUrl,
@@ -78,7 +83,7 @@ const addStocks = async (req, res) => {
       stock: savedStock,
       activityRecord: savedActivity,
       success: true,
-      message: `New inbound stock added to "${product.brand} ${product.name}" with the batch no. "${data.batch}" in variant "${variant.name}".`,
+      message: `New inbound stock added to "${product.brand.name} ${product.name}" with the batch no. "${data.batch}" in variant "${variant.name}".`,
     });
   } catch (error) {
     console.log("Error", error);

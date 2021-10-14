@@ -15,9 +15,11 @@ const modifyProducts = async (req, res) => {
   } = req;
 
   try {
-    const isExist = await Product.exists({ _id: data._id });
+    const product = await Product.findById({ _id: data._id });
 
-    if (!isExist)
+    await product.execPopulate("variants");
+
+    if (!product)
       return res.status(404).json({
         message: `Product "${data.brand} ${data.name}" does not exist. Please add the product first.`,
         success: false,
@@ -33,14 +35,35 @@ const modifyProducts = async (req, res) => {
         success: false,
       });
 
+    console.log({
+      productVars: product.variants.length,
+      dataVars: data.variants.length,
+    });
+
+    const removedVariants = [];
+    if (product.variants.length > data.variants.length) {
+      const diff = product.variants.filter(
+        (variant) => !data.variants.find((vari) => vari.name === variant.name)
+      );
+
+      diff.forEach(async ({ _id }) => {
+        const remV = await Variant.findByIdAndDelete(_id);
+        removedVariants.push(remV);
+      });
+    }
+
+    const newVariants = [];
     for (const variant of data.variants) {
       const isExist = await Variant.exists({ _id: variant._id });
 
-      if (!isExist)
-        return res.status(404).json({
-          message: `Variant with ID "${variant._id}" does not exist. Please add the variant first.`,
-          success: false,
-        });
+      if (!isExist) {
+        const newVariant = await new Variant({
+          ...variant,
+          product: data._id,
+        }).save();
+        newVariants.push(newVariant);
+        continue;
+      }
 
       await Variant.findByIdAndUpdate(variant._id, variant, {
         runValidators: true,
@@ -68,10 +91,19 @@ const modifyProducts = async (req, res) => {
         populate: { path: "addedBy", select: populatedAddedByFilter },
       });
 
+    await updatedProduct.execPopulate({
+      path: "brand",
+      select: { name: 1 },
+    });
+
     const savedActivity = await new Activity({
       mode: "update",
       path: req.originalUrl,
-      record: updatedProduct._id,
+      record: [
+        updatedProduct._id,
+        ...newVariants.map(({ _id }) => _id),
+        ...removedVariants.map(({ _id }) => _id),
+      ],
       user: adminId,
       status: "success",
       date: new Date().toISOString(),

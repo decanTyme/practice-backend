@@ -67,6 +67,8 @@ const moveStocks = async (req, res) => {
       date: new Date().toISOString(),
     }).save();
 
+    await movedStock.execPopulate("courier");
+
     await movedStock.execPopulate({
       path: "addedBy",
       populate: { path: "user", select: populatedAddedByFilter },
