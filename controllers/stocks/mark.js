@@ -6,25 +6,18 @@ const populatedAddedByFilter = {
   password: 0,
 };
 
-const moveStocks = async (req, res) => {
+const markStocks = async (req, res) => {
   const {
     user: { id: adminId },
     query: queries,
     body: data,
   } = req;
 
-  console.log(req.path, queries, data);
   try {
     if (!queries._id)
       return res.status(400).json({
         success: false,
         message: "No stock ID was given.",
-      });
-
-    if (!queries._type)
-      return res.status(400).json({
-        success: false,
-        message: "No move location indicated.",
       });
 
     const stock = await Stock.findById(queries._id);
@@ -35,49 +28,39 @@ const moveStocks = async (req, res) => {
         success: false,
       });
 
-    if (stock._type === queries._type)
+    if (stock.checked === queries.mark)
       return res.status(200).json({
-        message: `Stock with batch no. "${stock.batch}" is already in ${queries._type}.`,
+        message: `Stock with ID "${queries._id}" is already marked as ${queries.mark}.`,
         success: false,
       });
 
-    // If it was moved from inbound to warehouse, it means the stock has
-    // arrived, hence auto append an arrival date
-    if (stock._type === "inbound" && queries._type === "warehouse")
-      stock.arrivedOn = new Date().toISOString();
+    const prevMark = stock.checked;
 
-    // The stock should also be already inventory checked if moved from
-    // warehouse to sold
-    if (stock._type === "warehouse" && queries._type === "sold")
-      stock.checked = true;
+    stock.checked = queries.mark;
 
-    const prevType = stock._type;
-
-    stock._type = queries._type;
-
-    const movedStock = await stock.save();
+    await stock.save();
 
     const savedActivity = await new Activity({
       mode: "update",
       path: req.originalUrl,
-      record: movedStock._id,
-      reason: `Move stock from "${prevType}" to "${queries._type}".`,
+      record: stock._id,
+      reason: `Stock marked from ${prevMark} to ${queries.mark}.`,
       user: adminId,
       status: "success",
       date: new Date().toISOString(),
     }).save();
 
-    await movedStock.execPopulate("courier");
-
-    await movedStock.execPopulate({
+    await stock.execPopulate({
       path: "addedBy",
       populate: { path: "user", select: populatedAddedByFilter },
     });
 
-    await movedStock.execPopulate({
+    await stock.execPopulate({
       path: "updatedBy",
       populate: { path: "user", select: populatedAddedByFilter },
     });
+
+    await stock.execPopulate("courier");
 
     await savedActivity.execPopulate({
       path: "user",
@@ -85,18 +68,18 @@ const moveStocks = async (req, res) => {
     });
 
     return res.status(200).json({
-      moved: movedStock,
+      stock,
       activityRecord: savedActivity,
-      message: `Stock with the batch no. "${stock.batch}" successfully moved to ${queries._type}.`,
+      message: `Stock with the batch no. "${stock.batch}" successfully marked as ${queries.mark}.`,
       success: true,
     });
   } catch (error) {
-    console.log(req.originalUrl, "Error", error);
+    console.log("Error", error);
 
     const savedActivity = await new Activity({
       mode: "update",
-      path: req.originalUrl,
       record: queries._id,
+      path: req.originalUrl,
       reason: error.message,
       user: adminId,
       status: "fail",
@@ -123,9 +106,10 @@ const moveStocks = async (req, res) => {
 
     return res.status(500).json({
       error: JSON.stringify(error) || error.message,
+      activityRecord: savedActivity,
       message: "There was an error in saving the stock.",
     });
   }
 };
 
-module.exports = moveStocks;
+module.exports = markStocks;

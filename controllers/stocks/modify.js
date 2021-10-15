@@ -1,3 +1,5 @@
+const Product = require("../../models/product");
+const Variant = require("../../models/variant");
 const Stock = require("../../models/stock");
 const Activity = require("../../models/activity");
 
@@ -14,72 +16,67 @@ const modifyStocks = async (req, res) => {
   } = req;
 
   try {
-    if (queries.check) {
-      if (!queries._id)
-        return res.status(400).json({
-          success: false,
-          message: "No stock ID was given.",
-        });
+    const isExist = await Stock.exists({ _id: data._id });
 
-      const stock = await Stock.findById(queries._id);
+    if (!isExist)
+      return res.status(404).json({
+        message: `Stock with batch no. "${data.batch}" does not exist. Please add the stock first.`,
+        success: false,
+      });
 
-      if (!stock)
-        return res.status(404).json({
-          message: `Stock with ID "${queries._id}" does not exist.`,
-          success: false,
-        });
+    await Stock.findByIdAndUpdate(data._id, data, {
+      runValidators: true,
+      context: "query",
+    });
 
-      if (stock.checked === queries.mark)
-        return res.status(200).json({
-          message: `Stock with ID "${queries._id}" is already marked as ${queries.mark}.`,
-          success: false,
-        });
-
-      const prevMark = stock.checked;
-
-      stock.checked = queries.mark;
-
-      await stock.save();
-
-      const savedActivity = await new Activity({
-        mode: "update",
-        path: req.originalUrl,
-        record: stock._id,
-        reason: `Stock marked from ${prevMark} to ${queries.mark}.`,
-        user: adminId,
-        status: "success",
-        date: new Date().toISOString(),
-      }).save();
-
-      await stock.execPopulate({
+    const updatedStock = await Stock.findById(data._id)
+      .select({ createdAt: 0, updatedAt: 0 })
+      .populate({
+        path: "courier",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: {
+          path: "addedBy",
+          select: { createdAt: 0, updatedAt: 0 },
+          populate: { path: "user", select: populatedAddedByFilter },
+        },
+      })
+      .populate({
         path: "addedBy",
+        select: { createdAt: 0, updatedAt: 0 },
         populate: { path: "user", select: populatedAddedByFilter },
-      });
-
-      await stock.execPopulate({
+      })
+      .populate({
         path: "updatedBy",
+        select: { createdAt: 0, updatedAt: 0 },
         populate: { path: "user", select: populatedAddedByFilter },
       });
-
-      await stock.execPopulate("courier");
-
-      await savedActivity.execPopulate({
-        path: "user",
-        select: populatedAddedByFilter,
-      });
-
-      return res.status(200).json({
-        stock,
-        activityRecord: savedActivity,
-        message: `Stock with the batch no. "${stock.batch}" successfully marked as ${queries.mark}.`,
-        success: true,
-      });
-    }
-  } catch (error) {
-    console.log("Error", error);
 
     const savedActivity = await new Activity({
       mode: "update",
+      path: req.originalUrl,
+      record: updatedStock._id,
+      user: adminId,
+      status: "success",
+      date: new Date().toISOString(),
+    }).save();
+
+    await savedActivity.execPopulate({
+      path: "user",
+      select: populatedAddedByFilter,
+    });
+
+    res.status(200).json({
+      stock: updatedStock,
+      activityRecord: savedActivity,
+      success: true,
+      message: `Stock with batch no. ${updatedStock.batch} updated successfully.`,
+    });
+  } catch (error) {
+    console.log(error);
+
+    const savedActivity = await new Activity({
+      mode: "update",
+      record: data._id,
       path: req.originalUrl,
       reason: error.message,
       user: adminId,
@@ -92,25 +89,24 @@ const modifyStocks = async (req, res) => {
       select: populatedAddedByFilter,
     });
 
-    if (error instanceof TypeError)
-      return res.status(500).json({
-        error: JSON.stringify(error),
-        activityRecord: savedActivity,
-        message: "There was an error in saving the product.",
-      });
-
-    // if (error instanceof CastError)
-    //   return res.status(500).json({
-    //     error: `${error.name}: ${error.message}`,
-    //     message: "There was an error in adding the stock to the product.",
-    //   });
-
     return res.status(500).json({
-      error: JSON.stringify(error) || error.message,
+      error,
       activityRecord: savedActivity,
-      message: "There was an error in saving the stock.",
+      message: "There was an error in updating the product.",
     });
   }
+
+  // if (updatedProduct.n === 0)
+  //   return res.status(400).json({
+  //     success: false,
+  //     message: `There was product with id: ${req.body._id}`,
+  //   });
+
+  // if (updatedProduct.nModified === 0)
+  //   return res.status(400).json({
+  //     success: false,
+  //     message: "No products were modified.",
+  //   });
 };
 
 module.exports = modifyStocks;

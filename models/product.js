@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Types.ObjectId;
+const uniqueValidator = require("mongoose-unique-validator");
 
 const ProductSchema = new Schema(
   {
@@ -80,5 +81,7 @@ ProductSchema.virtual("deletedBy", {
 //   justOne: false,
 //   options: { sort: { name: 1 } },
 // });
+
+ProductSchema.plugin(uniqueValidator);
 
 module.exports = mongoose.model("Product", ProductSchema);

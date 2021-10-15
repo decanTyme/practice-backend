@@ -10,8 +10,26 @@ const loadStocks = async (req, res) => {
 
   try {
     const stocks = await Stock.find()
-      .populate("courier")
-      .populate("addedBy", populatedAddedByFilter);
+      .select({ createdAt: 0, updatedAt: 0 })
+      .populate({
+        path: "courier",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: {
+          path: "addedBy",
+          select: { createdAt: 0, updatedAt: 0 },
+          populate: { path: "user", select: populatedAddedByFilter },
+        },
+      })
+      .populate({
+        path: "addedBy",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: { path: "user", select: populatedAddedByFilter },
+      })
+      .populate({
+        path: "updatedBy",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: { path: "user", select: populatedAddedByFilter },
+      });
 
     return res.status(200).json(stocks);
   } catch (error) {

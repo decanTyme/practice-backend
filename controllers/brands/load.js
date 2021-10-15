@@ -9,11 +9,18 @@ const loadBrands = async (req, res) => {
   const { query: queries, body } = req;
 
   try {
-    const brands = await Brand.find().populate({
-      path: "addedBy",
-      select: { createdAt: 0, updatedAt: 0 },
-      populate: { path: "user", select: populatedAddedByFilter },
-    });
+    const brands = await Brand.find()
+      .select({ createdAt: 0, updatedAt: 0 })
+      .populate({
+        path: "addedBy",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: { path: "user", select: populatedAddedByFilter },
+      })
+      .populate({
+        path: "updatedBy",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: { path: "user", select: populatedAddedByFilter },
+      });
 
     res.status(200).json(brands);
   } catch (error) {

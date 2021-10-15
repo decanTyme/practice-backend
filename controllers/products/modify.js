@@ -15,9 +15,7 @@ const modifyProducts = async (req, res) => {
   } = req;
 
   try {
-    const product = await Product.findById({ _id: data._id });
-
-    await product.execPopulate("variants");
+    const product = await Product.findById(data._id);
 
     if (!product)
       return res.status(404).json({
@@ -27,6 +25,7 @@ const modifyProducts = async (req, res) => {
 
     await Product.findByIdAndUpdate(data._id, data, {
       runValidators: true,
+      context: "query",
     });
 
     if (!data.variants || data.variants.length === 0)
@@ -35,10 +34,7 @@ const modifyProducts = async (req, res) => {
         success: false,
       });
 
-    console.log({
-      productVars: product.variants.length,
-      dataVars: data.variants.length,
-    });
+    await product.execPopulate("variants");
 
     const removedVariants = [];
     if (product.variants.length > data.variants.length) {
@@ -67,28 +63,64 @@ const modifyProducts = async (req, res) => {
 
       await Variant.findByIdAndUpdate(variant._id, variant, {
         runValidators: true,
+        context: "query",
       });
     }
 
     const updatedProduct = await Product.findById(data._id)
-      .populate("addedBy", populatedAddedByFilter)
+      .select({ createdAt: 0, updatedAt: 0 })
+      .populate({ path: "brand", select: { name: 1 } })
       .populate({
         path: "variants",
+        select: { createdAt: 0, updatedAt: 0 },
         populate: {
           path: "stocks",
-          populate: { path: "addedBy", select: populatedAddedByFilter },
+          select: { createdAt: 0, updatedAt: 0 },
+          populate: {
+            path: "addedBy",
+            select: { createdAt: 0, updatedAt: 0 },
+            populate: { path: "user", select: populatedAddedByFilter },
+          },
         },
       })
       .populate({
         path: "variants",
+        select: { createdAt: 0, updatedAt: 0 },
         populate: {
-          path: "stocks",
-          populate: { path: "courier" },
+          path: "prices",
+          select: { createdAt: 0, updatedAt: 0 },
         },
       })
       .populate({
         path: "variants",
-        populate: { path: "addedBy", select: populatedAddedByFilter },
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: {
+          path: "stocks",
+          select: { createdAt: 0, updatedAt: 0 },
+          populate: {
+            path: "courier",
+            select: { createdAt: 0, updatedAt: 0 },
+          },
+        },
+      })
+      .populate({
+        path: "variants",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: {
+          path: "addedBy",
+          select: { createdAt: 0, updatedAt: 0 },
+          populate: { path: "user", select: populatedAddedByFilter },
+        },
+      })
+      .populate({
+        path: "addedBy",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: { path: "user", select: populatedAddedByFilter },
+      })
+      .populate({
+        path: "updatedBy",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: { path: "user", select: populatedAddedByFilter },
       });
 
     await updatedProduct.execPopulate({
@@ -125,6 +157,7 @@ const modifyProducts = async (req, res) => {
 
     const savedActivity = await new Activity({
       mode: "update",
+      record: data._id,
       path: req.originalUrl,
       reason: error.message,
       user: adminId,

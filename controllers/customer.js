@@ -24,7 +24,8 @@ exports.load = async (req, res) => {
 
   try {
     if (queries.populate === "none") {
-      const customers = await Customer.find({})
+      const customers = await Customer.find()
+        .select({ createdAt: 0, updatedAt: 0 })
         .populate({
           path: "addedBy",
           select: { createdAt: 0, updatedAt: 0 },
@@ -129,6 +130,7 @@ exports.modify = async (req, res) => {
     const updatedCustomer = await Customer.findByIdAndUpdate(_id, body, {
       new: true,
       runValidators: true,
+      context: "query",
     });
 
     if (!updatedCustomer)

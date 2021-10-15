@@ -2,44 +2,52 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Types.ObjectId;
 
+const customerTypes = [
+  "retail",
+  "reseller",
+  "bulker",
+  "city distributor",
+  "provincial distributor",
+];
+
 const CustomerSchema = new Schema(
   {
     _type: {
       type: String,
-      enum: [
-        "retail",
-        "reseller",
-        "bulker",
-        "city distributor",
-        "provincial distributor",
-      ],
+      enum: customerTypes,
       required: true,
     },
     company: {
       type: ObjectId,
       ref: "Brand",
       required: function () {
-        return this._type !== "retail";
+        return this._type !== "retail" || this._type !== "bulker";
       },
     },
     designation: { type: String, default: "" },
     firstname: { type: String, required: true },
     lastname: { type: String, required: true },
-    contacts: [
-      {
+    contacts: {
+      type: Array,
+      of: {
         telcom: { type: String, required: true },
         number: { type: String, required: true },
       },
-    ],
-    address: {
-      street: String,
-      purok: String,
-      barangay: String,
-      city: String,
-      province: String,
-      postcode: Number,
+      required: true,
+      validate: (arr) => arr == null || arr.length > 0,
     },
-    bio: { type: String, default: "Insert customer information here..." },
+    address: {
+      street: { type: String },
+      purok: { type: String },
+      barangay: { type: String },
+      city: { type: String },
+      province: { type: String },
+      postcode: { type: Number },
+    },
+    bio: {
+      type: String,
+      default: "Enter additional customer information here...",
+    },
     displayPic: {
       type: String,
       default:
@@ -75,9 +83,7 @@ CustomerSchema.virtual("addedBy", {
   foreignField: "record",
 
   justOne: true,
-  options: {
-    match: { mode: "add" },
-  },
+  options: { match: { mode: "add" } },
 });
 
 CustomerSchema.virtual("updatedBy", {
@@ -86,10 +92,7 @@ CustomerSchema.virtual("updatedBy", {
   foreignField: "record",
 
   justOne: false,
-  options: {
-    match: { mode: "update" },
-    sort: { date: 1 },
-  },
+  options: { match: { mode: "update" }, sort: { date: 1 } },
 });
 
 CustomerSchema.virtual("deletedBy", {
@@ -98,9 +101,7 @@ CustomerSchema.virtual("deletedBy", {
   foreignField: "record",
 
   justOne: true,
-  options: {
-    match: { mode: "delete" },
-  },
+  options: { match: { mode: "delete" } },
 });
 
 module.exports = mongoose.model("Customer", CustomerSchema);
