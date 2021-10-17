@@ -6,63 +6,55 @@ const populatedAddedByFilter = {
   password: 0,
 };
 
-const addBrands = async (req, res) => {
+const removeBrands = async (req, res) => {
   const {
     user: { id: adminId },
     query: queries,
     body: data,
   } = req;
 
+  console.log(req.path, queries);
   try {
-    const isExist = await Brand.exists({ name: data.name });
+    if (!queries._id)
+      return res.status(400).json({
+        success: false,
+        message: "No stock ID was given.",
+      });
 
-    if (isExist)
-      return res.status(200).json({
-        message: `Brand "${data.name}" already exists.`,
+    const brand = await Brand.findById(queries._id);
+
+    if (!brand)
+      return res.status(404).json({
+        message: `Brand with ID "${queries._id}" does not exist.`,
         success: false,
       });
 
-    const savedBrand = await new Brand(data).save();
+    await Brand.deleteOne({ _id: queries._id });
 
     const savedActivity = await new Activity({
-      mode: "add",
+      mode: "delete",
       path: req.originalUrl,
-      record: savedBrand._id,
+      record: queries._id,
       user: adminId,
       status: "success",
       date: new Date().toISOString(),
     }).save();
-
-    await savedBrand.execPopulate({
-      path: "addedBy",
-      select: { createdAt: 0, updatedAt: 0 },
-      populate: { path: "user", select: populatedAddedByFilter },
-    });
-
-    await savedBrand.execPopulate({
-      path: "updatedBy",
-      select: { createdAt: 0, updatedAt: 0 },
-      populate: { path: "user", select: populatedAddedByFilter },
-    });
 
     await savedActivity.execPopulate({
       path: "user",
       select: populatedAddedByFilter,
     });
 
-    console.log({ savedBrand });
-
-    res.status(200).json({
-      brand: savedBrand,
+    return res.status(200).json({
       activityRecord: savedActivity,
+      message: `Brand "${brand.name}" successfully deleted.`,
       success: true,
-      message: `Successfully added the brand "${savedBrand.name}".`,
     });
   } catch (error) {
     console.log("Error", error);
 
     const savedActivity = await new Activity({
-      mode: "add",
+      mode: "delete",
       path: req.originalUrl,
       reason: error.message,
       user: adminId,
@@ -77,16 +69,22 @@ const addBrands = async (req, res) => {
 
     if (error instanceof TypeError)
       return res.status(500).json({
-        error: `${error.name}: ${error.message}`,
+        error: JSON.stringify(error),
         activityRecord: savedActivity,
-        message: "There was an error in fetching the brands.",
+        message: "There was an error in saving the product.",
       });
 
+    // if (error instanceof CastError)
+    //   return res.status(500).json({
+    //     error: `${error.name}: ${error.message}`,
+    //     message: "There was an error in adding the stock to the product.",
+    //   });
+
     return res.status(500).json({
-      error: `${error.name}: ${error.message}`,
-      message: "There was an error in fetching the brands.",
+      error: JSON.stringify(error) || error.message,
+      message: "There was an error in saving the stock.",
     });
   }
 };
 
-module.exports = addBrands;
+module.exports = removeBrands;

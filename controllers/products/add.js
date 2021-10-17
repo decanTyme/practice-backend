@@ -56,11 +56,36 @@ const addProducts = async (req, res) => {
 
         const savedProduct = await new Product(item).save();
 
+        await savedProduct.execPopulate({
+          path: "addedBy",
+          select: { createdAt: 0, updatedAt: 0 },
+          populate: { path: "user", select: populatedAddedByFilter },
+        });
+
+        await savedProduct.execPopulate({
+          path: "updatedBy",
+          select: { createdAt: 0, updatedAt: 0 },
+          populate: { path: "user", select: populatedAddedByFilter },
+        });
+
         for (const variant of item.variants) {
           const savedVariant = await new Variant({
             ...variant,
             product: savedProduct._id,
           }).save();
+
+          await savedVariant.execPopulate({
+            path: "addedBy",
+            select: { createdAt: 0, updatedAt: 0 },
+            populate: { path: "user", select: populatedAddedByFilter },
+          });
+
+          await savedVariant.execPopulate({
+            path: "updatedBy",
+            select: { createdAt: 0, updatedAt: 0 },
+            populate: { path: "user", select: populatedAddedByFilter },
+          });
+
           savedVariants.push(savedVariant);
         }
 
@@ -140,6 +165,18 @@ const addProducts = async (req, res) => {
         product: savedProduct._id,
       }).save();
 
+      await savedVariant.execPopulate({
+        path: "addedBy",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: { path: "user", select: populatedAddedByFilter },
+      });
+
+      await savedVariant.execPopulate({
+        path: "updatedBy",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: { path: "user", select: populatedAddedByFilter },
+      });
+
       savedVariantIds.push(savedVariant._id);
     }
 
@@ -155,8 +192,17 @@ const addProducts = async (req, res) => {
       select: { name: 1 },
     });
 
-    if (!savedProduct.populated("variants"))
-      throw new Error("Could not populate some paths.");
+    await savedProduct.execPopulate({
+      path: "addedBy",
+      select: { createdAt: 0, updatedAt: 0 },
+      populate: { path: "user", select: populatedAddedByFilter },
+    });
+
+    await savedProduct.execPopulate({
+      path: "updatedBy",
+      select: { createdAt: 0, updatedAt: 0 },
+      populate: { path: "user", select: populatedAddedByFilter },
+    });
 
     const savedActivity = await new Activity({
       mode: "add",

@@ -6,7 +6,7 @@ const populatedAddedByFilter = {
   password: 0,
 };
 
-const addBrands = async (req, res) => {
+const modifyBrands = async (req, res) => {
   const {
     user: { id: adminId },
     query: queries,
@@ -14,55 +14,57 @@ const addBrands = async (req, res) => {
   } = req;
 
   try {
-    const isExist = await Brand.exists({ name: data.name });
+    const isExist = await Brand.exists({ _id: data._id });
 
-    if (isExist)
+    if (!isExist)
       return res.status(200).json({
-        message: `Brand "${data.name}" already exists.`,
+        message: `Brand "${data.name}" does not exist. Please add the brand first.`,
         success: false,
       });
 
-    const savedBrand = await new Brand(data).save();
+    await Brand.findByIdAndUpdate(data._id, data, {
+      runValidators: true,
+      context: "query",
+    });
+
+    const updatedBrand = await Brand.findById(data._id)
+      .select({ createdAt: 0, updatedAt: 0 })
+      .populate({
+        path: "addedBy",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: { path: "user", select: populatedAddedByFilter },
+      })
+      .populate({
+        path: "updatedBy",
+        select: { createdAt: 0, updatedAt: 0 },
+        populate: { path: "user", select: populatedAddedByFilter },
+      });
 
     const savedActivity = await new Activity({
-      mode: "add",
+      mode: "update",
       path: req.originalUrl,
-      record: savedBrand._id,
+      record: updatedBrand._id,
       user: adminId,
       status: "success",
       date: new Date().toISOString(),
     }).save();
-
-    await savedBrand.execPopulate({
-      path: "addedBy",
-      select: { createdAt: 0, updatedAt: 0 },
-      populate: { path: "user", select: populatedAddedByFilter },
-    });
-
-    await savedBrand.execPopulate({
-      path: "updatedBy",
-      select: { createdAt: 0, updatedAt: 0 },
-      populate: { path: "user", select: populatedAddedByFilter },
-    });
 
     await savedActivity.execPopulate({
       path: "user",
       select: populatedAddedByFilter,
     });
 
-    console.log({ savedBrand });
-
     res.status(200).json({
-      brand: savedBrand,
+      brand: updatedBrand,
       activityRecord: savedActivity,
       success: true,
-      message: `Successfully added the brand "${savedBrand.name}".`,
+      message: `Successfully added the brand "${updatedBrand.name}".`,
     });
   } catch (error) {
     console.log("Error", error);
 
     const savedActivity = await new Activity({
-      mode: "add",
+      mode: "update",
       path: req.originalUrl,
       reason: error.message,
       user: adminId,
@@ -89,4 +91,4 @@ const addBrands = async (req, res) => {
   }
 };
 
-module.exports = addBrands;
+module.exports = modifyBrands;

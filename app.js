@@ -19,7 +19,7 @@ app.use(boolParser());
 // CORS Headers
 app.use(
   cors({
-    origin: "https://bodytalks-ph.herokuapp.com",
+    origin: "http://localhost:3000",
     allowedHeaders: [
       "Origin",
       "Content",

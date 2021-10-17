@@ -24,6 +24,11 @@ const BrandSchema = new Schema(
       default: "Insert additional brand information here...",
     },
     links: [{ type: String }],
+    images: {
+      type: Array,
+      of: { url: { type: String }, caption: { type: String } },
+      default: { caption: "Insert caption here..." },
+    },
   },
   {
     timestamps: true,

@@ -17,10 +17,7 @@ const ProductSchema = new Schema(
     unit: { type: String, enum: ["single", "set"], required: true },
     images: {
       type: Array,
-      of: {
-        url: { type: String },
-        caption: { type: String, default: "Insert caption here..." },
-      },
+      of: { url: { type: String }, caption: { type: String } },
       default: {
         url: "https://nayemdevs.com/wp-content/uploads/2020/03/default-product-image.png",
         caption: "Insert caption here...",
