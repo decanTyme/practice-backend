@@ -10,7 +10,15 @@ const CourierSchema = new Schema(
       required: true,
     },
     name: { type: String, required: true },
-    contacts: [{ type: String, required: true }],
+    contacts: {
+      type: Array,
+      of: {
+        telcom: { type: String, required: true },
+        number: { type: String, required: true },
+      },
+      required: true,
+      validate: (arr) => arr == null || arr.length > 0,
+    },
     address: {
       street: String,
       purok: String,
@@ -19,6 +27,7 @@ const CourierSchema = new Schema(
       province: String,
       postcode: Number,
     },
+    links: [{ type: String }],
     bio: { type: String, default: "Insert extra courier information here..." },
   },
   {

@@ -1,14 +1,15 @@
 const express = require("express");
 const { load, add, modify, remove } = require("../../controllers/products");
+const checkAccess = require("../../services/access-check");
 const variantRoutes = require("./variants");
 
 const router = express.Router({ strict: true, mergeParams: true });
 
 // Item management routes
 router.get("/", load);
-router.post("/add", add);
-router.patch("/modify", modify);
-router.delete("/del", remove);
+router.post("/add", checkAccess, add);
+router.patch("/modify", checkAccess, modify);
+router.delete("/del", checkAccess, remove);
 
 router.get("/:productId", load);
 

@@ -1,4 +1,4 @@
-const Brand = require("../../models/brand");
+const Courier = require("../../models/courier");
 const Activity = require("../../models/activity");
 
 const populatedAddedByFilter = {
@@ -6,7 +6,7 @@ const populatedAddedByFilter = {
   password: 0,
 };
 
-const modifyBrands = async (req, res) => {
+const modifyCouriers = async (req, res) => {
   const {
     user: { id: adminId },
     query: queries,
@@ -14,20 +14,20 @@ const modifyBrands = async (req, res) => {
   } = req;
 
   try {
-    const isExist = await Brand.exists({ _id: data._id });
+    const isExist = await Courier.exists({ _id: data._id });
 
     if (!isExist)
       return res.status(200).json({
-        message: `Brand "${data.name}" does not exist. Please add the brand first.`,
+        message: `Courier "${data.name}" does not exist. Please add the courier first.`,
         success: false,
       });
 
-    await Brand.findByIdAndUpdate(data._id, data, {
+    await Courier.findByIdAndUpdate(data._id, data, {
       runValidators: true,
       context: "query",
     });
 
-    const updatedBrand = await Brand.findById(data._id)
+    const updatedCourier = await Courier.findById(data._id)
       .select({ createdAt: 0, updatedAt: 0 })
       .populate({
         path: "addedBy",
@@ -43,7 +43,7 @@ const modifyBrands = async (req, res) => {
     const savedActivity = await new Activity({
       mode: "update",
       path: req.originalUrl,
-      record: updatedBrand._id,
+      record: updatedCourier._id,
       user: adminId,
       status: "success",
       date: new Date().toISOString(),
@@ -55,10 +55,10 @@ const modifyBrands = async (req, res) => {
     });
 
     res.status(200).json({
-      brand: updatedBrand,
+      courier: updatedCourier,
       activityRecord: savedActivity,
       success: true,
-      message: `Successfully updated the brand "${updatedBrand.name}".`,
+      message: `Successfully courier the courier "${updatedCourier.name}".`,
     });
   } catch (error) {
     console.log("Error", error);
@@ -91,4 +91,4 @@ const modifyBrands = async (req, res) => {
   }
 };
 
-module.exports = modifyBrands;
+module.exports = modifyCouriers;

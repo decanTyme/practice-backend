@@ -6,13 +6,14 @@ const {
   modify,
   remove,
 } = require("../../controllers/products/variants");
+const checkAccess = require("../../services/access-check");
 
 const router = express.Router();
 
 // Item management routes
-router.get("/", authenticateToken, load);
-router.post("/add", authenticateToken, add);
-router.patch("/modify", authenticateToken, modify);
-router.delete("/del", authenticateToken, remove);
+router.get("/", load);
+router.post("/add", checkAccess, add);
+router.patch("/modify", checkAccess, modify);
+router.delete("/del", checkAccess, remove);
 
 module.exports = router;

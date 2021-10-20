@@ -15,6 +15,7 @@ const BrandSchema = new Schema(
         street: { type: String, required: true },
         purok: { type: String, required: true },
         barangay: { type: String, required: true },
+        city: { type: String, required: true },
         province: { type: String, required: true },
       },
       default: [],

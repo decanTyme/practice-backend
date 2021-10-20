@@ -6,49 +6,39 @@ const populatedAddedByFilter = {
   password: 0,
 };
 
-const addCouriers = async (req, res) => {
+const removeCouriers = async (req, res) => {
   const {
     user: { id: adminId },
     query: queries,
     body: data,
   } = req;
 
+  console.log(req.path, queries);
   try {
-    const isExist = await Courier.exists({
-      name: data.name,
-    });
+    if (!queries._id)
+      return res.status(400).json({
+        success: false,
+        message: "No courier ID was given.",
+      });
 
-    if (isExist)
-      return res.status(200).json({
-        message: `Courier "${data.name}" already exists.`,
+    const courier = await Courier.findById(queries._id);
+
+    if (!courier)
+      return res.status(404).json({
+        message: `Courier with ID "${queries._id}" does not exist.`,
         success: false,
       });
 
-    const savedCourier = await new Courier({
-      ...data,
-      addedBy: adminId,
-    }).save();
+    await Courier.deleteOne({ _id: queries._id });
 
     const savedActivity = await new Activity({
-      mode: "add",
+      mode: "delete",
       path: req.originalUrl,
-      record: savedCourier._id,
+      record: queries._id,
       user: adminId,
       status: "success",
       date: new Date().toISOString(),
     }).save();
-
-    await savedCourier.execPopulate({
-      path: "addedBy",
-      select: { createdAt: 0, updatedAt: 0 },
-      populate: { path: "user", select: populatedAddedByFilter },
-    });
-
-    await savedCourier.execPopulate({
-      path: "updatedBy",
-      select: { createdAt: 0, updatedAt: 0 },
-      populate: { path: "user", select: populatedAddedByFilter },
-    });
 
     await savedActivity.execPopulate({
       path: "user",
@@ -56,16 +46,15 @@ const addCouriers = async (req, res) => {
     });
 
     return res.status(200).json({
-      courier: savedCourier,
       activityRecord: savedActivity,
-      message: `Successfully saved courier "${savedCourier.name}".`,
+      message: `Courier "${courier.name}" successfully deleted.`,
       success: true,
     });
   } catch (error) {
     console.log("Error", error);
 
     const savedActivity = await new Activity({
-      mode: "add",
+      mode: "delete",
       path: req.originalUrl,
       reason: error.message,
       user: adminId,
@@ -80,17 +69,22 @@ const addCouriers = async (req, res) => {
 
     if (error instanceof TypeError)
       return res.status(500).json({
-        error: `${error.name}: ${error.message}`,
+        error: JSON.stringify(error),
         activityRecord: savedActivity,
-        message: "There was an error in saving the courier.",
+        message: "There was an error in saving the product.",
       });
 
+    // if (error instanceof CastError)
+    //   return res.status(500).json({
+    //     error: `${error.name}: ${error.message}`,
+    //     message: "There was an error in adding the stock to the product.",
+    //   });
+
     return res.status(500).json({
-      error: `${error.name}: ${error.message}`,
-      activityRecord: savedActivity,
-      message: "There was an error in fetching the courier.",
+      error: JSON.stringify(error) || error.message,
+      message: "There was an error in saving the stock.",
     });
   }
 };
 
-module.exports = addCouriers;
+module.exports = removeCouriers;

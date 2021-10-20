@@ -13,17 +13,13 @@ function verifyToken(req, res, next) {
 
     const access = decoded.user.role.toLowerCase() === "administrator";
 
-    // Check if the user has authority
-    if (!access)
-      return res.status(403).json({
-        success: false,
-        message: "Sorry, you don't have enough priviliges to do that.",
-      });
-
     req.user = decoded.user;
+    req.access = access;
 
     next();
   } catch (error) {
+    console.log(error);
+
     if (error instanceof jwt.TokenExpiredError) {
       return res.status(403).json({
         hasToken: true,
@@ -40,7 +36,6 @@ function verifyToken(req, res, next) {
       });
     }
 
-    console.log(error);
     res.status(418).json({
       hasToken: false,
       auth: false,
