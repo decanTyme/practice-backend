@@ -82,6 +82,7 @@ const removeCouriers = async (req, res) => {
 
     return res.status(500).json({
       error: JSON.stringify(error) || error.message,
+      activityRecord: savedActivity,
       message: "There was an error in saving the stock.",
     });
   }

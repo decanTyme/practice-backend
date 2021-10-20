@@ -84,6 +84,7 @@ const addBrands = async (req, res) => {
 
     return res.status(500).json({
       error: `${error.name}: ${error.message}`,
+      activityRecord: savedActivity,
       message: "There was an error in fetching the brands.",
     });
   }

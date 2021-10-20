@@ -58,7 +58,7 @@ const modifyCouriers = async (req, res) => {
       courier: updatedCourier,
       activityRecord: savedActivity,
       success: true,
-      message: `Successfully courier the courier "${updatedCourier.name}".`,
+      message: `Successfully updated the courier "${updatedCourier.name}".`,
     });
   } catch (error) {
     console.log("Error", error);
@@ -86,6 +86,7 @@ const modifyCouriers = async (req, res) => {
 
     return res.status(500).json({
       error: `${error.name}: ${error.message}`,
+      activityRecord: savedActivity,
       message: "There was an error in fetching the brands.",
     });
   }
