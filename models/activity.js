@@ -15,7 +15,7 @@ const ActivitySchema = new Schema(
       },
     ],
     reason: { type: String },
-    user: { type: ObjectId, ref: "User" },
+    user: { type: ObjectId, ref: "User", required: true },
     status: {
       type: String,
       enum: ["pending", "success", "fail", "force", "revert"],

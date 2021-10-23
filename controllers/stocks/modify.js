@@ -10,7 +10,7 @@ const populatedAddedByFilter = {
 
 const modifyStocks = async (req, res) => {
   const {
-    user: { id: adminId },
+    user: { sub: adminId },
     query: queries,
     body: data,
   } = req;
@@ -99,7 +99,7 @@ const modifyStocks = async (req, res) => {
   // if (updatedProduct.n === 0)
   //   return res.status(400).json({
   //     success: false,
-  //     message: `There was product with id: ${req.body._id}`,
+  //     message: `There was product with ID: ${req.body._id}`,
   //   });
 
   // if (updatedProduct.nModified === 0)

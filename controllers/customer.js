@@ -59,7 +59,7 @@ exports.load = async (req, res) => {
 
 exports.add = async (req, res) => {
   const {
-    user: { id: adminId },
+    user: { sub: adminId },
     query: queries,
     body: data,
   } = req;

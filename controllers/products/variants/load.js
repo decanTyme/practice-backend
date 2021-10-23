@@ -12,7 +12,7 @@ const loadProductVariants = async (req, res) => {
   if (!productId)
     return res.status(400).json({
       success: false,
-      message: "No product id was given.",
+      message: "No product ID was given.",
     });
 
   try {

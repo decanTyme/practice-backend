@@ -10,7 +10,7 @@ const populatedAddedByFilter = {
 
 const removeProducts = async (req, res) => {
   const {
-    user: { id: adminId },
+    user: { sub: adminId },
     query: queries,
   } = req;
 
@@ -20,7 +20,7 @@ const removeProducts = async (req, res) => {
     if (!queries._id)
       return res.status(400).json({
         success: false,
-        message: "No product id was given.",
+        message: "No product ID was given.",
       });
 
     // Batch deletion

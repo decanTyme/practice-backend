@@ -47,7 +47,18 @@ exports.signup = (req, res) => {
 
 exports.login = (req, res) => {
   const client = req.body;
-  const longerSignin = JSON.parse(client.rememberUser);
+  let longerSignin = false;
+
+  try {
+    longerSignin = JSON.parse(client.rememberUser);
+  } catch (error) {
+    console.log(error);
+
+    return res.status(400).json({
+      error: JSON.stringify(error),
+      message: "An error occured. Please try again later.",
+    });
+  }
 
   /* Try to find user in database */
   User.findOne({ username: client.username }).then((user) => {
@@ -71,7 +82,7 @@ exports.login = (req, res) => {
         "Set-Cookie",
         cookie.serialize(
           "__auth_token",
-          generateAccessToken({ ...userData, id: user._id }),
+          generateAccessToken({ ...userData, sub: user._id }),
           {
             maxAge: 1200,
             path: "/",
@@ -85,7 +96,7 @@ exports.login = (req, res) => {
       /* If the user wants a longer signin, sign a new refresh token */
       if (longerSignin) {
         const refToken = generateAccessToken(
-          { ...userData, id: user._id },
+          { ...userData, sub: user._id },
           "REFRESH_TOKEN"
         );
         const newRefToken = new RefreshToken({
@@ -221,7 +232,7 @@ exports.authenticate = (req, res) => {
               "Set-Cookie",
               cookie.serialize(
                 "__auth_token",
-                generateAccessToken({ ...userData, id: user._id }),
+                generateAccessToken({ ...userData, sub: user._id }),
                 {
                   maxAge: 1200,
                   path: "/",
