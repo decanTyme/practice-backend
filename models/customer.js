@@ -12,19 +12,23 @@ const customerTypes = [
 
 const CustomerSchema = new Schema(
   {
-    _type: {
-      type: String,
-      enum: customerTypes,
-      required: true,
-    },
-    company: {
-      type: ObjectId,
-      ref: "Brand",
-      required: function () {
-        return this._type !== "retail" || this._type !== "bulker";
+    types: [
+      {
+        _type: {
+          type: String,
+          enum: customerTypes,
+          required: true,
+        },
+        company: {
+          type: ObjectId,
+          ref: "Brand",
+          required: function () {
+            return this._type !== "retail" || this._type !== "bulker";
+          },
+        },
+        designation: { type: String, default: "" },
       },
-    },
-    designation: { type: String, default: "" },
+    ],
     firstname: { type: String, required: true },
     lastname: { type: String, required: true },
     contacts: {

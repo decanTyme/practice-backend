@@ -7,16 +7,20 @@ const {
   move,
   remove,
 } = require("../../controllers/stocks");
-const checkAccess = require("../../services/access-check");
+const checkAccess = require("../../services/check-access");
 
 const router = express.Router();
 
 // Item management routes
 router.get("/", load);
-router.post("/add", checkAccess, add);
-router.patch("/modify", checkAccess, modify);
-router.patch("/mark", checkAccess, mark);
-router.patch("/move", checkAccess, move);
-router.delete("/del", checkAccess, remove);
+
+// Require appropriate authorization
+router.use(checkAccess);
+
+router.post("/add", add);
+router.patch("/modify", modify);
+router.patch("/mark", mark);
+router.patch("/move", move);
+router.delete("/del", remove);
 
 module.exports = router;

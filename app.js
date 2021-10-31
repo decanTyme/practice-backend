@@ -35,7 +35,7 @@ app.use(
 // Routes
 const authRoutes = require("./routes/auth");
 const allProtectedRoutes = require("./routes");
-const authenticateToken = require("./services/authenticate-token");
+const authenticateToken = require("./services/verify-token");
 
 // Custom Headers
 app.use((_, res, next) => {

@@ -14,7 +14,7 @@ const ProductSchema = new Schema(
       type: String,
       default: "Description of the product here...",
     },
-    unit: { type: String, enum: ["single", "set"], required: true },
+    unit: { type: String, required: true },
     images: {
       type: Array,
       of: { url: { type: String }, caption: { type: String } },

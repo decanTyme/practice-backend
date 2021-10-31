@@ -1,13 +1,17 @@
 const express = require("express");
 const customerCtrl = require("../controllers/customer");
-const checkAccess = require("../services/access-check");
+const checkAccess = require("../services/check-access");
 
 const router = express.Router();
 
 // Item management routes
 router.get("/", customerCtrl.load);
-router.post("/add", checkAccess, customerCtrl.add);
-router.patch("/modify", checkAccess, customerCtrl.modify);
-router.delete("/del", checkAccess, customerCtrl.delete);
+
+// Require appropriate authorization
+router.use(checkAccess);
+
+router.post("/add", customerCtrl.add);
+router.patch("/modify", customerCtrl.modify);
+router.delete("/del", customerCtrl.delete);
 
 module.exports = router;
