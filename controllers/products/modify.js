@@ -150,7 +150,7 @@ const modifyProducts = async (req, res) => {
       product: updatedProduct,
       activityRecord: savedActivity,
       success: true,
-      message: "Product updated successfully.",
+      message: `Product "${updatedProduct.brand.name} ${updatedProduct.name}" updated successfully.`,
     });
   } catch (error) {
     console.log(error);
@@ -176,18 +176,6 @@ const modifyProducts = async (req, res) => {
       message: "There was an error in updating the product.",
     });
   }
-
-  // if (updatedProduct.n === 0)
-  //   return res.status(400).json({
-  //     success: false,
-  //     message: `There was product with ID: ${req.body._id}`,
-  //   });
-
-  // if (updatedProduct.nModified === 0)
-  //   return res.status(400).json({
-  //     success: false,
-  //     message: "No products were modified.",
-  //   });
 };
 
 module.exports = modifyProducts;

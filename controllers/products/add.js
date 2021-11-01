@@ -35,14 +35,17 @@ const addProducts = async (req, res) => {
       const savedVariants = [];
 
       for (const item of data) {
-        const isExist = await Product.exists(productExistFilter(item));
+        const product = await Product.findOne(productExistFilter(item));
 
         // If a product already exist, add it to the existing products
         // array and do not perform a save
-        if (isExist) {
+        if (product) {
+          await product.execPopulate({ path: "brand", select: { name: 1 } });
+
           existingProducts.push({
-            brand: item.brand,
-            name: item.name,
+            brand: product.brand,
+            code: product.code,
+            name: product.name,
           });
 
           continue;
@@ -94,10 +97,10 @@ const addProducts = async (req, res) => {
       }
 
       if (savedProducts.length === 0)
-        return res.status(200).json({
+        return res.status(304).json({
           existing: existingProducts,
           success: false,
-          message: "No new products were saved.",
+          message: "No new products were saved because they already exist.",
         });
 
       const savedActivity = await new Activity({
@@ -123,7 +126,9 @@ const addProducts = async (req, res) => {
           existing: existingProducts,
           activityRecord: savedActivity,
           success: true,
-          message: "Some products were not saved because they already exist.",
+          message: `Some products were not saved because they already exist: ${existingProducts
+            .map(({ brand, code, name }) => `${brand.name} ${name} [${code}]`)
+            .join(", ")}`,
         });
 
       return res.status(201).json({
@@ -144,7 +149,7 @@ const addProducts = async (req, res) => {
         select: { name: 1 },
       });
 
-      return res.status(200).json({
+      return res.status(204).json({
         message: `Product "${product.brand.name} ${product.name}" with serial number "${product.code}" already exists.`,
         success: false,
       });

@@ -62,7 +62,7 @@ const removeProducts = async (req, res) => {
         return res.status(200).json({
           existing: nonExistentProducts,
           success: false,
-          message: "No products were deleted.",
+          message: "No products were deleted because they do not exist.",
         });
 
       const savedActivity = await new Activity({
@@ -85,7 +85,9 @@ const removeProducts = async (req, res) => {
           nonExistent: nonExistentProducts,
           activityRecord: savedActivity,
           success: true,
-          message: "Some products were not deleted because they do not exist.",
+          message: `Some products were not deleted because they do not exist: ${nonExistentProducts.join(
+            ", "
+          )}`,
         });
 
       return res.status(200).json({
