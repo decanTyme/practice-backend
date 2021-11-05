@@ -18,7 +18,7 @@ function verifyToken(req, res, next) {
 
     next();
   } catch (error) {
-    console.log(error);
+    console.log(req.path, "Token verification error:", error.message);
 
     if (error instanceof jwt.TokenExpiredError) {
       return res.status(403).json({

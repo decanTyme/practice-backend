@@ -11,9 +11,7 @@
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.13.13",
     "mongoose-sub-references-populate": "^1.0.2",
-    "mongoose-unique-validator": "^2.0.3",
-    "whatwg-fetch": "^3.6.2",
-    "xmlhttprequest": "^1.8.0"
+    "mongoose-unique-validator": "^2.0.3"
   },
   "name": "inventory-sys-web-api",
   "version": "1.2.0",
@@ -22,7 +20,7 @@
   "scripts": {
     "start": "node main",
     "dev": "nodemon main",
-    "deploy": "git status && git push base:master"
+    "deploy": "git status && git push heroku base:master"
   },
   "author": "Danry Ague",
   "license": "ISC",
