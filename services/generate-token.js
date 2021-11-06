@@ -1,5 +1,13 @@
 const jwt = require("jsonwebtoken");
 
+/**
+ * Generates JWT access tokens.
+ *
+ * @param  {*} userData
+ * @param  {*} type
+ *
+ * @return {*} Signed JWT Token
+ */
 function generateAccessToken(userData, type) {
   if (type === "REFRESH_TOKEN")
     return jwt.sign({ user: userData }, process.env.TOKEN_SECRET_REFRESH, {

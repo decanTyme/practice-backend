@@ -35,17 +35,18 @@ app.use(
 // Routes
 const authRoutes = require("./routes/auth");
 const allProtectedRoutes = require("./routes");
-const authenticateToken = require("./services/verify-token");
+const verifyToken = require("./services/verify-token");
 
 // Custom Headers
 app.use((_, res, next) => {
   res.setHeader("Vary", "Origin");
   res.setHeader("Cache-Control", "no-cache, must-revalidate");
+
   next();
 });
 
 // Routes Integration
 app.use("/api/auth", authRoutes);
-app.use("/api", authenticateToken, allProtectedRoutes);
+app.use("/api", verifyToken, allProtectedRoutes);
 
 module.exports = app;

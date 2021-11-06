@@ -1,5 +1,4 @@
 const bcrypt = require("bcrypt");
-const cookie = require("cookie");
 const generateAccessToken = require("../services/generate-token");
 
 // Mongoose model imports
@@ -45,23 +44,21 @@ exports.signup = (req, res) => {
     });
 };
 
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
   const client = req.body;
-  let longerSignin = false;
+  let longerSignin;
 
   try {
     longerSignin = JSON.parse(client.rememberUser);
   } catch (error) {
     console.log(error);
 
-    return res.status(400).json({
-      error: JSON.stringify(error),
-      message: "An error occured. Please try again later.",
-    });
+    longerSignin = false;
   }
 
-  /* Try to find user in database */
-  User.findOne({ username: client.username }).then((user) => {
+  try {
+    const user = await User.findOne({ username: client.username });
+
     if (!user) return res.status(401).json({ error: "Invalid Credentials" });
 
     /* Get the user data to send back to user */
@@ -73,83 +70,98 @@ exports.login = (req, res) => {
 
     const access = user.role.toLowerCase() === "administrator";
 
-    /* Validate the password */
-    bcrypt.compare(client.password, user.password).then((valid) => {
-      if (!valid) return res.status(401).json({ error: "Invalid Credentials" });
+    const valid = await bcrypt.compare(client.password, user.password);
 
-      /* Sign a new access token, serialize to cookie, and set to cookie header */
-      res.setHeader(
-        "Set-Cookie",
-        cookie.serialize(
-          "__auth_token",
-          generateAccessToken({ ...userData, sub: user._id }),
-          {
-            maxAge: 1200,
-            path: "/",
-            secure: true,
-            httpOnly: true,
-            sameSite: "none",
-          }
-        )
+    /* Validate the password */
+    if (!valid) return res.status(401).json({ error: "Invalid Credentials" });
+
+    /* Sign a new access token, serialize to cookie, and set to cookie header */
+    res.cookie(
+      "__auth_t",
+      generateAccessToken({ ...userData, sub: user._id, access }),
+      {
+        maxAge: 1_800_000,
+        path: "/",
+        secure: true,
+        httpOnly: true,
+        sameSite: "none",
+      }
+    );
+
+    /* If the user wants a longer signin, sign a new refresh token */
+    if (longerSignin) {
+      const refToken = generateAccessToken(
+        { ...userData, sub: user._id, access },
+        "REFRESH_TOKEN"
       );
 
-      /* If the user wants a longer signin, sign a new refresh token */
-      if (longerSignin) {
-        const refToken = generateAccessToken(
-          { ...userData, sub: user._id },
-          "REFRESH_TOKEN"
-        );
-        const newRefToken = new RefreshToken({
-          token: refToken,
-          rememberUser: longerSignin,
-        });
+      /* Save valid refresh token to database */
+      const savedRFToken = await new RefreshToken({
+        token: refToken,
+        rememberUser: longerSignin,
+      }).save();
 
-        /* Save valid refresh token to database */
-        newRefToken
-          .save()
-          .then(() => {
-            console.log("Refresh token added to DB.");
-            return res.status(200).json({
-              userId: user._id,
-              adminAccess: access,
-              refToken,
-              userData,
-            });
-          })
-          .catch(() => {
-            return res.status(500).json({
-              message:
-                "There was an authentication error. Please try again later.",
-            });
-          });
-      } else {
-        res.status(200).json({
-          userId: user._id,
-          userData,
-          adminAccess: access,
-        });
-      }
+      if (!savedRFToken) throw new Error("Database error");
+
+      res.cookie("__trf", refToken, {
+        maxAge: 86_400_000,
+        path: "/",
+        secure: true,
+        httpOnly: true,
+        sameSite: "none",
+      });
+
+      return res.status(200).json({
+        userId: user._id,
+        userData,
+        adminAccess: access,
+        persist: true,
+      });
+    } else
+      res.status(200).json({
+        userId: user._id,
+        userData,
+        adminAccess: access,
+        persist: false,
+      });
+  } catch (error) {
+    console.log(error);
+
+    if (error instanceof SyntaxError)
+      return res.status(400).json({
+        error: error.message,
+        message: "An error occured. Please try again later.",
+      });
+
+    return res.status(500).json({
+      error: error.message,
+      message: "There was an authentication error. Please try again later.",
     });
-  });
+  }
 };
 
 exports.signoff = (req, res) => {
-  console.log(req.path, "| Token:", req.body.refToken);
-  RefreshToken.deleteOne({ token: req.body.refToken })
+  console.log(req.path, "| Token:", req.cookies["__trf"]);
+
+  RefreshToken.deleteOne({ token: req.cookies["__trf"] })
     .then(() => {
       console.log("Successfully invalidated the refresh token.");
       res
+        .cookie("__auth_t", null, {
+          maxAge: 0,
+          path: "/",
+          secure: true,
+          httpOnly: true,
+          sameSite: "none",
+        })
+        .cookie("__trf", null, {
+          maxAge: 0,
+          path: "api/auth",
+          secure: true,
+          httpOnly: true,
+          sameSite: "none",
+        })
         .status(200)
-        .setHeader(
-          "Set-Cookie",
-          cookie.serialize("__auth_token", null, {
-            maxAge: 0,
-            path: "/",
-            secure: true,
-            httpOnly: true,
-            sameSite: "none",
-          })
-        )
         .json({ signoff: true });
     })
     .catch((error) => {
@@ -158,100 +170,98 @@ exports.signoff = (req, res) => {
     });
 };
 
-exports.authenticate = (req, res) => {
+exports.authenticate = async (req, res) => {
   if (!req.body.userId)
     return res.status(401).json({ auth: false, message: "Please log in." });
 
-  if (!req.body.refToken)
+  if (!req.cookies["__trf"])
     return res
-      .setHeader(
-        "Set-Cookie",
-        cookie.serialize("__auth_token", null, {
-          maxAge: 0,
-          path: "/",
-          secure: true,
-          httpOnly: true,
-          sameSite: "none",
-        })
-      )
+      .cookie("__auth_t", null, {
+        maxAge: 0,
+        path: "/",
+        secure: true,
+        httpOnly: true,
+        sameSite: "none",
+      })
       .status(403)
       .json({
         auth: false,
         message: "Session expired. Please login again.",
       });
 
-  User.findOne({ _id: req.body.userId })
-    .then((user) => {
-      if (!user)
-        return res
-          .status(403)
-          .json({ auth: false, message: "Invalid session." });
+  try {
+    const user = await User.findOne({ _id: req.body.userId });
 
-      const userData = {
-        firstname: user.firstname,
-        lastname: user.lastname,
-        role: user.role,
-      };
+    if (!user)
+      return res.status(403).json({ auth: false, message: "Invalid session." });
 
-      RefreshToken.findOne({ token: req.body.refToken })
-        .then((token) => {
-          if (!token)
-            return res.status(403).json({
-              auth: false,
-              invalidSession: true,
-              message: "Invalid session.",
-            });
+    const userData = {
+      firstname: user.firstname,
+      lastname: user.lastname,
+      role: user.role,
+    };
 
-          if (!token.rememberUser)
-            return RefreshToken.deleteOne({ token: req.body.refToken }).then(
-              () => {
-                console.log("Refresh token invalidated.");
-
-                res
-                  .setHeader(
-                    "Set-Cookie",
-                    cookie.serialize("__auth_token", null, {
-                      maxAge: 0,
-                      path: "/",
-                      secure: true,
-                      httpOnly: true,
-                      sameSite: "none",
-                    })
-                  )
-                  .status(403)
-                  .json({
-                    auth: false,
-                    message: "Session expired. Please login again.",
-                  });
-              }
-            );
-
-          console.log("Token refreshed.");
-          res
-            .setHeader(
-              "Set-Cookie",
-              cookie.serialize(
-                "__auth_token",
-                generateAccessToken({ ...userData, sub: user._id }),
-                {
-                  maxAge: 1200,
-                  path: "/",
-                  secure: true,
-                  httpOnly: true,
-                  sameSite: "none",
-                }
-              )
-            )
-            .status(200)
-            .json({ auth: true });
-        })
-        .catch(() => {
-          res.status(403).json({ auth: false, message: "Invalid session." });
-        });
-    })
-    .catch(() => {
-      res.status(401).json({ auth: false, message: "Please log in." });
+    const rf = await RefreshToken.findOne({
+      token: req.cookies["__trf"],
     });
+
+    if (!rf)
+      return res.status(403).json({
+        auth: false,
+        invalidSession: true,
+        message: "Invalid session.",
+      });
+
+    if (!rf.rememberUser) {
+      await RefreshToken.deleteOne({ token: req.cookies["__trf"] });
+      console.log("Refresh token invalidated.");
+
+      return res
+        .cookie("__auth_t", null, {
+          maxAge: 0,
+          path: "/",
+          secure: true,
+          httpOnly: true,
+          sameSite: "none",
+        })
+        .status(403)
+        .json({
+          auth: false,
+          message: "Session expired. Please login again.",
+        });
+    }
+
+    const access = user.role.toLowerCase() === "administrator";
+
+    console.log("Token refreshed.");
+    return res
+      .cookie(
+        "__auth_t",
+        generateAccessToken({ ...userData, sub: user._id, access }),
+        {
+          maxAge: 1_800_000,
+          path: "/",
+          secure: true,
+          httpOnly: true,
+          sameSite: "none",
+        }
+      )
+      .status(200)
+      .json({ auth: true });
+  } catch (error) {
+    console.log(error);
+
+    if (error instanceof SyntaxError)
+      return res.status(400).json({
+        error: error.message,
+        message: "An error occured. Please try again later.",
+      });
+
+    return res.status(500).json({
+      error: error.message,
+      message: "There was an authentication error. Please try again later.",
+    });
+  }
 };
 
 exports.ping = (req, res) => {

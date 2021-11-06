@@ -10,7 +10,6 @@
     "express-query-boolean": "^2.0.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.13.13",
-    "mongoose-sub-references-populate": "^1.0.2",
     "mongoose-unique-validator": "^2.0.3"
   },
   "name": "inventory-sys-web-api",
@@ -24,5 +23,8 @@
   },
   "author": "Danry Ague",
   "license": "ISC",
-  "homepage": "https://github.com/epcraft93/inventory-sys-web#readme"
+  "devDependencies": {
+    "eslint": "^8.2.0",
+    "eslint-config-google": "^0.14.0"
+  }
 }
