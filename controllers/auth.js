@@ -265,12 +265,6 @@ exports.authenticate = async (req, res) => {
 };
 
 exports.ping = (req, res) => {
-  if (!req.isDbConnected)
-    return res.status(500).json({
-      error: req.databaseConnectError,
-      message: "Database connect error",
-    });
-
   return res.json({ auth: true });
 };
 

@@ -9,8 +9,8 @@
     "express": "^4.17.1",
     "express-query-boolean": "^2.0.0",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.13.13",
-    "mongoose-unique-validator": "^2.0.3"
+    "mongoose": "^6.0.12",
+    "mongoose-unique-validator": "^3.0.0"
   },
   "name": "inventory-sys-web-api",
   "version": "1.2.0",

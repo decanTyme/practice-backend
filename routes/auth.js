@@ -1,12 +1,11 @@
 const express = require("express");
 const authCtrl = require("../controllers/auth");
 const verifyToken = require("../services/verify-token");
-const checkDbConnection = require("../services/db-check");
 
 const router = express.Router();
 
 // Pings the database to check if it is connected
-router.get("/ping", verifyToken, checkDbConnection, authCtrl.ping);
+router.get("/ping", verifyToken, authCtrl.ping);
 
 // Authentication routes
 router.post("/signup", authCtrl.signup);
