@@ -20,6 +20,14 @@
     "indent": ["error", 2, { "SwitchCase": 1 }],
     "curly": ["error", "multi"],
     "comma-dangle": ["error", "only-multiline"],
-    "new-cap": ["error", { "capIsNew": false }]
+    "new-cap": ["error", { "capIsNew": false }],
+    "space-before-function-paren": [
+      "error",
+      {
+        "anonymous": "always",
+        "named": "never",
+        "asyncArrow": "always"
+      }
+    ]
   }
 }
