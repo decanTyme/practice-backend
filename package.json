@@ -24,7 +24,7 @@
   "author": "Danry Ague",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "^8.2.0",
+    "eslint": "^8.12.0",
     "eslint-config-google": "^0.14.0"
   }
 }
