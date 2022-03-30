@@ -1,4 +1,15 @@
 {
+  "name": "inventory-sys-web-api",
+  "version": "1.2.0",
+  "description": "BodyTalks.PH API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon main",
+    "deploy": "git status && git push heroku base:master"
+  },
+  "author": "Danry Ague",
+  "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.0.1",
     "cookie": "^0.4.2",
@@ -12,17 +23,6 @@
     "mongoose": "^6.2.9",
     "mongoose-unique-validator": "^3.0.0"
   },
-  "name": "inventory-sys-web-api",
-  "version": "1.2.0",
-  "description": "BodyTalks.PH API",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon main",
-    "deploy": "git status && git push heroku base:master"
-  },
-  "author": "Danry Ague",
-  "license": "ISC",
   "devDependencies": {
     "eslint": "^8.12.0",
     "eslint-config-google": "^0.14.0"
