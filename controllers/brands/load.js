@@ -6,8 +6,6 @@ const populatedAddedByFilter = {
 };
 
 const loadBrands = async (req, res) => {
-  const { query: queries, body } = req;
-
   try {
     const brands = await Brand.find()
       .select({ createdAt: 0, updatedAt: 0 })

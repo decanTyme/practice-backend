@@ -35,7 +35,8 @@ const addStocks = async (req, res) => {
 
     if (isExist)
       return res.status(200).json({
-        message: `The stock with batch no. ${data.batch} already exists. Update the stock directly instead.`,
+        message: `The stock with batch no. ${data.batch} already exists. 
+                  Update the stock directly instead.`,
         exists: true,
         success: false,
       });

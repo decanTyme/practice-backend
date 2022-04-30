@@ -10,8 +10,6 @@ const populatedAddedByFilter = {
 const addVariant = async (req, res) => {
   const {
     user: { sub: adminId },
-    query: queries,
-    params,
     body: data,
     productId,
   } = req;

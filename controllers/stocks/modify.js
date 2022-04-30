@@ -1,5 +1,3 @@
-const Product = require("../../models/product");
-const Variant = require("../../models/variant");
 const Stock = require("../../models/stock");
 const Activity = require("../../models/activity");
 
@@ -11,7 +9,6 @@ const populatedAddedByFilter = {
 const modifyStocks = async (req, res) => {
   const {
     user: { sub: adminId },
-    query: queries,
     body: data,
   } = req;
 

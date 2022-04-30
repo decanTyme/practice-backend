@@ -10,7 +10,6 @@ const markStocks = async (req, res) => {
   const {
     user: { sub: adminId },
     query: queries,
-    body: data,
   } = req;
 
   try {

@@ -1,4 +1,3 @@
-const mongoose = require("mongoose");
 const Customer = require("../models/customer");
 const Activity = require("../models/activity");
 
@@ -20,7 +19,6 @@ const generateErrorMsg = (type) =>
 
 exports.load = async (req, res) => {
   const queries = req.query;
-  const body = req.body;
 
   try {
     if (queries.populate === "none") {

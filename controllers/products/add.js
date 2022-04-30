@@ -126,6 +126,7 @@ const addProducts = async (req, res) => {
           existing: existingProducts,
           activityRecord: savedActivity,
           success: true,
+
           message: `Some products were not saved because they already exist: ${existingProducts
             .map(({ brand, code, name }) => `${brand.name} ${name} [${code}]`)
             .join(", ")}`,
@@ -227,6 +228,7 @@ const addProducts = async (req, res) => {
       product: savedProduct,
       activityRecord: savedActivity,
       success: true,
+
       message: `Successfully created the product "${savedProduct.brand.name} ${data.name}".`,
     });
   } catch (error) {

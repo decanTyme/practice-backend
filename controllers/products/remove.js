@@ -45,11 +45,10 @@ const removeProducts = async (req, res) => {
 
         const variants = await Variant.find({ product: itemId });
 
-        for (const variant of variants) {
+        for (const variant of variants)
           allDeletedStockCount += (
             await Stock.deleteMany({ variant: variant._id })
           ).deletedCount;
-        }
 
         const deletedVariants = await Variant.deleteMany({ product: itemId });
         await Product.findByIdAndDelete(itemId);
@@ -85,6 +84,7 @@ const removeProducts = async (req, res) => {
           nonExistent: nonExistentProducts,
           activityRecord: savedActivity,
           success: true,
+
           message: `Some products were not deleted because they do not exist: ${nonExistentProducts.join(
             ", "
           )}`,
@@ -98,6 +98,7 @@ const removeProducts = async (req, res) => {
         },
         activityRecord: savedActivity,
         success: true,
+
         message: `Successfully removed all the following products: ${deletedProducts
           .map(({ brand, name }) => `${brand.name} ${name}`)
           .join(", ")}`,
@@ -118,10 +119,9 @@ const removeProducts = async (req, res) => {
     const variants = await Variant.find({ product: queries._id });
 
     let deletedStockCount = 0;
-    for (const variant of variants) {
+    for (const variant of variants)
       deletedStockCount += (await Stock.deleteMany({ variant: variant._id }))
         .deletedCount;
-    }
 
     const deletedVariants = await Variant.deleteMany({ product: queries._id });
     const deletedProduct = await Product.findByIdAndDelete(queries._id);

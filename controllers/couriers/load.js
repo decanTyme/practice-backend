@@ -6,8 +6,6 @@ const populatedAddedByFilter = {
 };
 
 const loadCouriers = async (req, res) => {
-  const { query: queries, body } = req;
-
   try {
     const couriers = await Courier.find()
       .select({ createdAt: 0, updatedAt: 0 })

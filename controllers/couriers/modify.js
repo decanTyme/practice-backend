@@ -9,7 +9,6 @@ const populatedAddedByFilter = {
 const modifyCouriers = async (req, res) => {
   const {
     user: { sub: adminId },
-    query: queries,
     body: data,
   } = req;
 
@@ -18,7 +17,8 @@ const modifyCouriers = async (req, res) => {
 
     if (!isExist)
       return res.status(200).json({
-        message: `Courier "${data.name}" does not exist. Please add the courier first.`,
+        message: `Courier "${data.name}" does not exist. 
+                  Please add the courier first.`,
         success: false,
       });
 

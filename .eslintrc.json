@@ -10,7 +10,6 @@
     "ecmaVersion": 12
   },
   "rules": {
-    "linebreak-style": ["error", "windows"],
     "quotes": [
       "error",
       "double",
@@ -28,6 +27,8 @@
         "named": "never",
         "asyncArrow": "always"
       }
-    ]
+    ],
+    "require-jsdoc": "off",
+    "max-len": "off"
   }
 }

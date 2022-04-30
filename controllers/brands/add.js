@@ -9,7 +9,6 @@ const populatedAddedByFilter = {
 const addBrands = async (req, res) => {
   const {
     user: { sub: adminId },
-    query: queries,
     body: data,
   } = req;
 

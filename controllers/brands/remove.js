@@ -10,7 +10,6 @@ const removeBrands = async (req, res) => {
   const {
     user: { sub: adminId },
     query: queries,
-    body: data,
   } = req;
 
   console.log(req.path, queries);

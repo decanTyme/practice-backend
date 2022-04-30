@@ -9,7 +9,6 @@ const populatedAddedByFilter = {
 const modifyBrands = async (req, res) => {
   const {
     user: { sub: adminId },
-    query: queries,
     body: data,
   } = req;
 
@@ -18,7 +17,8 @@ const modifyBrands = async (req, res) => {
 
     if (!isExist)
       return res.status(200).json({
-        message: `Brand "${data.name}" does not exist. Please add the brand first.`,
+        message: `Brand "${data.name}" does not exist. 
+                  Please add the brand first.`,
         success: false,
       });
 

@@ -10,7 +10,6 @@ const populatedAddedByFilter = {
 const modifyProducts = async (req, res) => {
   const {
     user: { sub: adminId },
-    query: queries,
     body: data,
   } = req;
 
@@ -19,7 +18,8 @@ const modifyProducts = async (req, res) => {
 
     if (!product)
       return res.status(404).json({
-        message: `Product "${data.brand} ${data.name}" does not exist. Please add the product first.`,
+        message: `Product "${data.brand} ${data.name}" does not exist. 
+                  Please add the product first.`,
         success: false,
       });
 
