@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon main",
+    "lint": "eslint .",
     "deploy": "git status && git push heroku"
   },
   "author": "Danry Ague",
