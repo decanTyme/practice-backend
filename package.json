@@ -21,7 +21,7 @@
     "express": "^4.17.3",
     "express-query-boolean": "^2.0.0",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^6.2.9",
+    "mongoose": "^6.4.6",
     "mongoose-unique-validator": "^3.0.0"
   },
   "devDependencies": {
